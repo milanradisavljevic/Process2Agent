@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:signavio="http://www.signavio.com"
+             id="Definitions_SubLaunch"
+             targetNamespace="http://bpmn.io/schema/bpmn"
+             exporter="Claude"
+             exporterVersion="1.0">
+
+  <!-- ========================================== -->
+  <!-- COLLABORATION (Pool-Ebene)                 -->
+  <!-- ========================================== -->
+  <collaboration id="Collaboration_Launch">
+    <participant id="Participant_LaunchPool" name="Launchvorbereitung" processRef="Process_Launchvorbereitung"/>
+  </collaboration>
+
+  <!-- ========================================== -->
+  <!-- PROZESS                                    -->
+  <!-- ========================================== -->
+  <process id="Process_Launchvorbereitung" name="Launchvorbereitung" isExecutable="false">
+    
+    <!-- LANES -->
+    <laneSet id="LaneSet_Launch">
+      <lane id="Lane_Marketing_Launch" name="Marketing / Projektleitung">
+        <flowNodeRef>StartEvent_Launch</flowNodeRef>
+        <flowNodeRef>Gateway_ParallelStart_Launch</flowNodeRef>
+        <flowNodeRef>Task_TradeStoryFinal</flowNodeRef>
+        <flowNodeRef>Task_Handelsunterlagen</flowNodeRef>
+        <flowNodeRef>Task_Kommunikationsplan</flowNodeRef>
+        <flowNodeRef>Task_Mediaplanung</flowNodeRef>
+        <flowNodeRef>Gateway_ParallelEnd_Launch</flowNodeRef>
+        <flowNodeRef>Task_LaunchReadiness</flowNodeRef>
+        <flowNodeRef>EndEvent_Launch</flowNodeRef>
+      </lane>
+      <lane id="Lane_Vertrieb" name="Vertrieb / Key Account">
+        <flowNodeRef>Task_Handelsvorstellung</flowNodeRef>
+        <flowNodeRef>Task_Listungsbestaetigung</flowNodeRef>
+        <flowNodeRef>Task_Vertriebsaktivierung</flowNodeRef>
+        <flowNodeRef>Task_Vertriebstagung</flowNodeRef>
+      </lane>
+      <lane id="Lane_Admin" name="Administration / Stammdaten">
+        <flowNodeRef>Task_GS1Sync</flowNodeRef>
+        <flowNodeRef>Task_Artikelanlage</flowNodeRef>
+        <flowNodeRef>Task_Preispflege</flowNodeRef>
+      </lane>
+      <lane id="Lane_Produktion" name="Produktion / Supply Chain">
+        <flowNodeRef>Task_Produktionsplanung</flowNodeRef>
+        <flowNodeRef>Task_Materialbestellung</flowNodeRef>
+        <flowNodeRef>Task_Erstproduktion</flowNodeRef>
+      </lane>
+    </laneSet>
+
+    <!-- ====== START ====== -->
+    
+    <startEvent id="StartEvent_Launch" name="Projekt-Kickoff erfolgt">
+      <outgoing>Flow_L01</outgoing>
+    </startEvent>
+
+    <parallelGateway id="Gateway_ParallelStart_Launch" name="Parallele Vorbereitung starten">
+      <incoming>Flow_L01</incoming>
+      <outgoing>Flow_L02_Marketing</outgoing>
+      <outgoing>Flow_L02_Vertrieb</outgoing>
+      <outgoing>Flow_L02_Admin</outgoing>
+      <outgoing>Flow_L02_Produktion</outgoing>
+    </parallelGateway>
+
+    <!-- ====== STRANG 1: MARKETING / KOMMUNIKATION ====== -->
+
+    <task id="Task_TradeStoryFinal" name="Trade Story finalisieren">
+      <documentation>Finale Verkaufsargumentation für Handelspartner</documentation>
+      <incoming>Flow_L02_Marketing</incoming>
+      <outgoing>Flow_L03a</outgoing>
+    </task>
+
+    <task id="Task_Handelsunterlagen" name="Handelsunterlagen erstellen">
+      <documentation>Präsentationen, Datenblätter, Verkaufsfolder für KAM</documentation>
+      <incoming>Flow_L03a</incoming>
+      <outgoing>Flow_L03b</outgoing>
+    </task>
+
+    <task id="Task_Kommunikationsplan" name="Kommunikationsplan finalisieren">
+      <documentation>PR, Social Media, POS-Material, Sampling</documentation>
+      <incoming>Flow_L03b</incoming>
+      <outgoing>Flow_L03c</outgoing>
+    </task>
+
+    <task id="Task_Mediaplanung" name="Mediaplanung und Buchung">
+      <documentation>Werbemittel, Mediaschaltung, Influencer</documentation>
+      <incoming>Flow_L03c</incoming>
+      <outgoing>Flow_L04_Marketing</outgoing>
+    </task>
+
+    <!-- ====== STRANG 2: VERTRIEB ====== -->
+
+    <task id="Task_Handelsvorstellung" name="Handelsvorstellung durchführen">
+      <documentation>Präsentation bei Key Accounts (ca. Woche -13)</documentation>
+      <incoming>Flow_L02_Vertrieb</incoming>
+      <outgoing>Flow_L05a</outgoing>
+    </task>
+
+    <task id="Task_Listungsbestaetigung" name="Listungsbestätigungen einholen">
+      <documentation>Verbindliche Zusagen der Handelspartner (ca. Woche -6)</documentation>
+      <incoming>Flow_L05a</incoming>
+      <outgoing>Flow_L05b</outgoing>
+    </task>
+
+    <task id="Task_Vertriebsaktivierung" name="Vertriebsaktivierung vorbereiten">
+      <documentation>Schulungsunterlagen, Incentives, Zielvereinbarungen</documentation>
+      <incoming>Flow_L05b</incoming>
+      <outgoing>Flow_L05c</outgoing>
+    </task>
+
+    <task id="Task_Vertriebstagung" name="Vertriebstagung / Sales Meeting">
+      <documentation>Interne Produktvorstellung und Verkaufsschulung (ca. Woche -3)</documentation>
+      <incoming>Flow_L05c</incoming>
+      <outgoing>Flow_L04_Vertrieb</outgoing>
+    </task>
+
+    <!-- ====== STRANG 3: ADMINISTRATION ====== -->
+
+    <task id="Task_GS1Sync" name="GS1 Sync durchführen">
+      <documentation>Artikelstammdaten an GS1 Austria übermitteln</documentation>
+      <incoming>Flow_L02_Admin</incoming>
+      <outgoing>Flow_L06a</outgoing>
+    </task>
+
+    <task id="Task_Artikelanlage" name="Artikelanlage in ERP">
+      <documentation>Neue Artikel in NAV/ERP anlegen, Stücklisten, Arbeitspläne</documentation>
+      <incoming>Flow_L06a</incoming>
+      <outgoing>Flow_L06b</outgoing>
+    </task>
+
+    <task id="Task_Preispflege" name="Preise und Konditionen pflegen">
+      <documentation>Preislisten, Kundenkonditionen, Promotionspreise</documentation>
+      <incoming>Flow_L06b</incoming>
+      <outgoing>Flow_L04_Admin</outgoing>
+    </task>
+
+    <!-- ====== STRANG 4: PRODUKTION ====== -->
+
+    <task id="Task_Produktionsplanung" name="Produktionsplanung erstellen">
+      <documentation>Kapazitätsplanung, Terminierung Erstcharge</documentation>
+      <incoming>Flow_L02_Produktion</incoming>
+      <outgoing>Flow_L07a</outgoing>
+    </task>
+
+    <task id="Task_Materialbestellung" name="Material und Verpackung bestellen">
+      <documentation>Rohstoffe, Etiketten, Gebinde, Umkartons</documentation>
+      <incoming>Flow_L07a</incoming>
+      <outgoing>Flow_L07b</outgoing>
+    </task>
+
+    <task id="Task_Erstproduktion" name="Erstproduktion durchführen">
+      <documentation>Produktion der Erstcharge (ca. Woche -1)</documentation>
+      <incoming>Flow_L07b</incoming>
+      <outgoing>Flow_L04_Produktion</outgoing>
+    </task>
+
+    <!-- ====== ZUSAMMENFÜHRUNG ====== -->
+
+    <parallelGateway id="Gateway_ParallelEnd_Launch" name="Alle Vorbereitungen abschließen">
+      <incoming>Flow_L04_Marketing</incoming>
+      <incoming>Flow_L04_Vertrieb</incoming>
+      <incoming>Flow_L04_Admin</incoming>
+      <incoming>Flow_L04_Produktion</incoming>
+      <outgoing>Flow_L08</outgoing>
+    </parallelGateway>
+
+    <task id="Task_LaunchReadiness" name="Launch Readiness Check">
+      <documentation>Finale Prüfung: Produkt, Unterlagen, Systeme, Lagerbestand bereit?</documentation>
+      <incoming>Flow_L08</incoming>
+      <outgoing>Flow_L09</outgoing>
+    </task>
+
+    <endEvent id="EndEvent_Launch" name="Launchvorbereitung abgeschlossen">
+      <incoming>Flow_L09</incoming>
+    </endEvent>
+
+    <!-- ====== SEQUENCE FLOWS ====== -->
+    
+    <sequenceFlow id="Flow_L01" sourceRef="StartEvent_Launch" targetRef="Gateway_ParallelStart_Launch"/>
+    
+    <!-- Parallel Split -->
+    <sequenceFlow id="Flow_L02_Marketing" sourceRef="Gateway_ParallelStart_Launch" targetRef="Task_TradeStoryFinal"/>
+    <sequenceFlow id="Flow_L02_Vertrieb" sourceRef="Gateway_ParallelStart_Launch" targetRef="Task_Handelsvorstellung"/>
+    <sequenceFlow id="Flow_L02_Admin" sourceRef="Gateway_ParallelStart_Launch" targetRef="Task_GS1Sync"/>
+    <sequenceFlow id="Flow_L02_Produktion" sourceRef="Gateway_ParallelStart_Launch" targetRef="Task_Produktionsplanung"/>
+    
+    <!-- Strang 1: Marketing -->
+    <sequenceFlow id="Flow_L03a" sourceRef="Task_TradeStoryFinal" targetRef="Task_Handelsunterlagen"/>
+    <sequenceFlow id="Flow_L03b" sourceRef="Task_Handelsunterlagen" targetRef="Task_Kommunikationsplan"/>
+    <sequenceFlow id="Flow_L03c" sourceRef="Task_Kommunikationsplan" targetRef="Task_Mediaplanung"/>
+    <sequenceFlow id="Flow_L04_Marketing" sourceRef="Task_Mediaplanung" targetRef="Gateway_ParallelEnd_Launch"/>
+    
+    <!-- Strang 2: Vertrieb -->
+    <sequenceFlow id="Flow_L05a" sourceRef="Task_Handelsvorstellung" targetRef="Task_Listungsbestaetigung"/>
+    <sequenceFlow id="Flow_L05b" sourceRef="Task_Listungsbestaetigung" targetRef="Task_Vertriebsaktivierung"/>
+    <sequenceFlow id="Flow_L05c" sourceRef="Task_Vertriebsaktivierung" targetRef="Task_Vertriebstagung"/>
+    <sequenceFlow id="Flow_L04_Vertrieb" sourceRef="Task_Vertriebstagung" targetRef="Gateway_ParallelEnd_Launch"/>
+    
+    <!-- Strang 3: Administration -->
+    <sequenceFlow id="Flow_L06a" sourceRef="Task_GS1Sync" targetRef="Task_Artikelanlage"/>
+    <sequenceFlow id="Flow_L06b" sourceRef="Task_Artikelanlage" targetRef="Task_Preispflege"/>
+    <sequenceFlow id="Flow_L04_Admin" sourceRef="Task_Preispflege" targetRef="Gateway_ParallelEnd_Launch"/>
+    
+    <!-- Strang 4: Produktion -->
+    <sequenceFlow id="Flow_L07a" sourceRef="Task_Produktionsplanung" targetRef="Task_Materialbestellung"/>
+    <sequenceFlow id="Flow_L07b" sourceRef="Task_Materialbestellung" targetRef="Task_Erstproduktion"/>
+    <sequenceFlow id="Flow_L04_Produktion" sourceRef="Task_Erstproduktion" targetRef="Gateway_ParallelEnd_Launch"/>
+    
+    <!-- Zusammenführung -->
+    <sequenceFlow id="Flow_L08" sourceRef="Gateway_ParallelEnd_Launch" targetRef="Task_LaunchReadiness"/>
+    <sequenceFlow id="Flow_L09" sourceRef="Task_LaunchReadiness" targetRef="EndEvent_Launch"/>
+
+  </process>
+
+  <!-- ========================================== -->
+  <!-- BPMN DIAGRAM INTERCHANGE (DI)              -->
+  <!-- ========================================== -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Launch" name="Launchvorbereitung">
+    <bpmndi:BPMNPlane id="BPMNPlane_Launch" bpmnElement="Collaboration_Launch">
+      
+      <!-- POOL -->
+      <bpmndi:BPMNShape id="Shape_Participant_Launch" bpmnElement="Participant_LaunchPool" isHorizontal="true">
+        <omgdc:Bounds x="120" y="60" width="1400" height="600"/>
+      </bpmndi:BPMNShape>
+      
+      <!-- LANES -->
+      <bpmndi:BPMNShape id="Shape_Lane_Marketing_Launch" bpmnElement="Lane_Marketing_Launch" isHorizontal="true">
+        <omgdc:Bounds x="150" y="60" width="1370" height="160"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Vertrieb" bpmnElement="Lane_Vertrieb" isHorizontal="true">
+        <omgdc:Bounds x="150" y="220" width="1370" height="150"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Admin" bpmnElement="Lane_Admin" isHorizontal="true">
+        <omgdc:Bounds x="150" y="370" width="1370" height="140"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Produktion" bpmnElement="Lane_Produktion" isHorizontal="true">
+        <omgdc:Bounds x="150" y="510" width="1370" height="150"/>
+      </bpmndi:BPMNShape>
+
+      <!-- ====== SHAPES ====== -->
+      
+      <!-- Start und Parallel Gateway -->
+      <bpmndi:BPMNShape id="Shape_StartEvent_Launch" bpmnElement="StartEvent_Launch">
+        <omgdc:Bounds x="192" y="122" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="170" y="165" width="80" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Gateway_ParallelStart_Launch" bpmnElement="Gateway_ParallelStart_Launch">
+        <omgdc:Bounds x="275" y="115" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="255" y="85" width="90" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Strang 1: Marketing -->
+      <bpmndi:BPMNShape id="Shape_Task_TradeStoryFinal" bpmnElement="Task_TradeStoryFinal">
+        <omgdc:Bounds x="380" y="100" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Handelsunterlagen" bpmnElement="Task_Handelsunterlagen">
+        <omgdc:Bounds x="540" y="100" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Kommunikationsplan" bpmnElement="Task_Kommunikationsplan">
+        <omgdc:Bounds x="700" y="100" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Mediaplanung" bpmnElement="Task_Mediaplanung">
+        <omgdc:Bounds x="860" y="100" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Strang 2: Vertrieb -->
+      <bpmndi:BPMNShape id="Shape_Task_Handelsvorstellung" bpmnElement="Task_Handelsvorstellung">
+        <omgdc:Bounds x="380" y="265" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Listungsbestaetigung" bpmnElement="Task_Listungsbestaetigung">
+        <omgdc:Bounds x="540" y="265" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Vertriebsaktivierung" bpmnElement="Task_Vertriebsaktivierung">
+        <omgdc:Bounds x="700" y="265" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Vertriebstagung" bpmnElement="Task_Vertriebstagung">
+        <omgdc:Bounds x="860" y="265" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Strang 3: Administration -->
+      <bpmndi:BPMNShape id="Shape_Task_GS1Sync" bpmnElement="Task_GS1Sync">
+        <omgdc:Bounds x="380" y="410" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Artikelanlage" bpmnElement="Task_Artikelanlage">
+        <omgdc:Bounds x="540" y="410" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Preispflege" bpmnElement="Task_Preispflege">
+        <omgdc:Bounds x="700" y="410" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Strang 4: Produktion -->
+      <bpmndi:BPMNShape id="Shape_Task_Produktionsplanung" bpmnElement="Task_Produktionsplanung">
+        <omgdc:Bounds x="380" y="555" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Materialbestellung" bpmnElement="Task_Materialbestellung">
+        <omgdc:Bounds x="540" y="555" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Erstproduktion" bpmnElement="Task_Erstproduktion">
+        <omgdc:Bounds x="700" y="555" width="120" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Zusammenführung -->
+      <bpmndi:BPMNShape id="Shape_Gateway_ParallelEnd_Launch" bpmnElement="Gateway_ParallelEnd_Launch">
+        <omgdc:Bounds x="1045" y="115" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="1025" y="85" width="90" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_LaunchReadiness" bpmnElement="Task_LaunchReadiness">
+        <omgdc:Bounds x="1150" y="100" width="130" height="60"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_EndEvent_Launch" bpmnElement="EndEvent_Launch">
+        <omgdc:Bounds x="1332" y="112" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="1305" y="155" width="90" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- ====== EDGES ====== -->
+      
+      <!-- Start zu Parallel Gateway -->
+      <bpmndi:BPMNEdge id="Edge_Flow_L01" bpmnElement="Flow_L01">
+        <omgdi:waypoint x="228" y="140"/>
+        <omgdi:waypoint x="275" y="140"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Parallel Split - 4 Ausgänge -->
+      <bpmndi:BPMNEdge id="Edge_Flow_L02_Marketing" bpmnElement="Flow_L02_Marketing">
+        <omgdi:waypoint x="325" y="140"/>
+        <omgdi:waypoint x="352" y="140"/>
+        <omgdi:waypoint x="352" y="130"/>
+        <omgdi:waypoint x="380" y="130"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L02_Vertrieb" bpmnElement="Flow_L02_Vertrieb">
+        <omgdi:waypoint x="300" y="165"/>
+        <omgdi:waypoint x="300" y="295"/>
+        <omgdi:waypoint x="380" y="295"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L02_Admin" bpmnElement="Flow_L02_Admin">
+        <omgdi:waypoint x="300" y="165"/>
+        <omgdi:waypoint x="300" y="440"/>
+        <omgdi:waypoint x="380" y="440"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L02_Produktion" bpmnElement="Flow_L02_Produktion">
+        <omgdi:waypoint x="300" y="165"/>
+        <omgdi:waypoint x="300" y="585"/>
+        <omgdi:waypoint x="380" y="585"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Strang 1: Marketing -->
+      <bpmndi:BPMNEdge id="Edge_Flow_L03a" bpmnElement="Flow_L03a">
+        <omgdi:waypoint x="500" y="130"/>
+        <omgdi:waypoint x="540" y="130"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L03b" bpmnElement="Flow_L03b">
+        <omgdi:waypoint x="660" y="130"/>
+        <omgdi:waypoint x="700" y="130"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L03c" bpmnElement="Flow_L03c">
+        <omgdi:waypoint x="820" y="130"/>
+        <omgdi:waypoint x="860" y="130"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L04_Marketing" bpmnElement="Flow_L04_Marketing">
+        <omgdi:waypoint x="980" y="130"/>
+        <omgdi:waypoint x="1012" y="130"/>
+        <omgdi:waypoint x="1012" y="140"/>
+        <omgdi:waypoint x="1045" y="140"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Strang 2: Vertrieb -->
+      <bpmndi:BPMNEdge id="Edge_Flow_L05a" bpmnElement="Flow_L05a">
+        <omgdi:waypoint x="500" y="295"/>
+        <omgdi:waypoint x="540" y="295"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L05b" bpmnElement="Flow_L05b">
+        <omgdi:waypoint x="660" y="295"/>
+        <omgdi:waypoint x="700" y="295"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L05c" bpmnElement="Flow_L05c">
+        <omgdi:waypoint x="820" y="295"/>
+        <omgdi:waypoint x="860" y="295"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L04_Vertrieb" bpmnElement="Flow_L04_Vertrieb">
+        <omgdi:waypoint x="980" y="295"/>
+        <omgdi:waypoint x="1070" y="295"/>
+        <omgdi:waypoint x="1070" y="165"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Strang 3: Administration -->
+      <bpmndi:BPMNEdge id="Edge_Flow_L06a" bpmnElement="Flow_L06a">
+        <omgdi:waypoint x="500" y="440"/>
+        <omgdi:waypoint x="540" y="440"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L06b" bpmnElement="Flow_L06b">
+        <omgdi:waypoint x="660" y="440"/>
+        <omgdi:waypoint x="700" y="440"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L04_Admin" bpmnElement="Flow_L04_Admin">
+        <omgdi:waypoint x="820" y="440"/>
+        <omgdi:waypoint x="1070" y="440"/>
+        <omgdi:waypoint x="1070" y="165"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Strang 4: Produktion -->
+      <bpmndi:BPMNEdge id="Edge_Flow_L07a" bpmnElement="Flow_L07a">
+        <omgdi:waypoint x="500" y="585"/>
+        <omgdi:waypoint x="540" y="585"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L07b" bpmnElement="Flow_L07b">
+        <omgdi:waypoint x="660" y="585"/>
+        <omgdi:waypoint x="700" y="585"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L04_Produktion" bpmnElement="Flow_L04_Produktion">
+        <omgdi:waypoint x="820" y="585"/>
+        <omgdi:waypoint x="1070" y="585"/>
+        <omgdi:waypoint x="1070" y="165"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Zusammenführung zu Ende -->
+      <bpmndi:BPMNEdge id="Edge_Flow_L08" bpmnElement="Flow_L08">
+        <omgdi:waypoint x="1095" y="140"/>
+        <omgdi:waypoint x="1150" y="130"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_L09" bpmnElement="Flow_L09">
+        <omgdi:waypoint x="1280" y="130"/>
+        <omgdi:waypoint x="1332" y="130"/>
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>
