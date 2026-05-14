@@ -1,31 +1,7 @@
-# Dependencies
 node_modules/
-
-# Build output
 dist/
-dist-ssr/
-
-# Local env files
+.vite/
+*.local
 .env
-.env.local
-.env.*.local
-
-# Editor
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Zone.Identifier files (Windows WSL artifact)
-*:Zone.Identifier
-
-# Logs
-*.log
-npm-debug.log*
+.env.*
+*.Zone.Identifier

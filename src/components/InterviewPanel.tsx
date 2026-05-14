@@ -83,7 +83,7 @@ export function InterviewPanel({ element, suggestion, decision, currentIndex, to
     <aside className="interview-panel">
       <div className="drawer-header">
         <div>
-          <p className="drawer-eyebrow">{element.laneName ?? ''}</p>
+          <p className="drawer-eyebrow">{element.laneName ?? 'Keine Lane'}</p>
           <h2 className="drawer-title">{element.name}</h2>
         </div>
         <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Schließen">
@@ -92,98 +92,98 @@ export function InterviewPanel({ element, suggestion, decision, currentIndex, to
       </div>
 
       <div className="interview-panel-body">
-      <div className="step-meta">
-        <span>Schritt {currentIndex + 1} von {total}</span>
-        <span>{element.bpmnType}</span>
-      </div>
-      <p className="muted">{element.laneName ? `Lane: ${element.laneName}` : 'Keine Lane erkannt'} · Quelle: {sourceLabel(element.source)}</p>
+        <div className="step-meta">
+          <span>Schritt {currentIndex + 1} von {total}</span>
+          <span className="bpmn-type-badge">{element.bpmnType}</span>
+        </div>
+        <p className="muted">{element.laneName ? `Lane: ${element.laneName}` : 'Keine Lane erkannt'} · Quelle: {sourceLabel(element.source)}</p>
 
-      <div className={suggestion.source === 'fallback' ? 'suggestion-box neutral' : 'suggestion-box'}>
-        <strong>{recommendationTitle}</strong>
-        <p>{suggestion.rationale}</p>
-        {suggestion.matchedKeywords.length > 0 ? <small>Erkannt über: {suggestion.matchedKeywords.join(', ')}</small> : <small>Quelle: {suggestion.source}</small>}
-        {suggestion.implementation_hint && (
-          <div className="hint-box">
-            <strong>Umsetzungshinweis</strong>
-            <p>{suggestion.implementation_hint}</p>
-          </div>
-        )}
-        {suggestion.risk && (
-          <div className="risk-box">
-            <strong>Risiko</strong>
-            <p>{suggestion.risk}</p>
-          </div>
-        )}
-      </div>
+        <div className={suggestion.source === 'fallback' ? 'suggestion-box neutral' : 'suggestion-box'}>
+          <strong>{recommendationTitle}</strong>
+          <p>{suggestion.rationale}</p>
+          {suggestion.matchedKeywords.length > 0 ? <small>Erkannt über: {suggestion.matchedKeywords.join(', ')}</small> : <small>Quelle: {suggestion.source}</small>}
+          {suggestion.implementation_hint && (
+            <div className="hint-box">
+              <strong>Umsetzungshinweis</strong>
+              <p>{suggestion.implementation_hint}</p>
+            </div>
+          )}
+          {suggestion.risk && (
+            <div className="risk-box">
+              <strong>Risiko</strong>
+              <p>{suggestion.risk}</p>
+            </div>
+          )}
+        </div>
 
-      <section className="question-block">
-        <h3>1. Wie soll KI hier unterstützen?</h3>
-        <div className="choice-grid pattern-grid">
-          {PATTERN_OPTIONS.map((option) => {
-            const Icon = PATTERN_ICONS[option];
-            return (
-              <button
-                className={pattern === option ? 'choice-card selected' : 'choice-card'}
-                data-pattern={option}
-                key={option}
-                type="button"
-                onClick={() => setPattern(option)}
-              >
-                <span className="card-icon"><Icon size={16} strokeWidth={2} /></span>
-                <strong>{PATTERN_LABELS[option]}</strong>
-                <span>{PATTERN_HINTS[option]}</span>
+        <section className="question-block">
+          <h3>1. Wie soll KI hier unterstützen?</h3>
+          <div className="choice-grid pattern-grid">
+            {PATTERN_OPTIONS.map((option) => {
+              const Icon = PATTERN_ICONS[option];
+              return (
+                <button
+                  className={pattern === option ? 'choice-card selected' : 'choice-card'}
+                  data-pattern={option}
+                  key={option}
+                  type="button"
+                  onClick={() => setPattern(option)}
+                >
+                  <span className="card-icon"><Icon size={16} strokeWidth={2} /></span>
+                  <strong>{PATTERN_LABELS[option]}</strong>
+                  <span>{PATTERN_HINTS[option]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="question-block">
+          <h3>2. Welche Daten sind betroffen?</h3>
+          <div className="choice-grid compact-grid">
+            {PRIVACY_OPTIONS.map((option) => (
+              <button className={privacy === option ? 'choice-pill selected' : 'choice-pill'} key={option} type="button" onClick={() => setPrivacy(option)}>
+                {PRIVACY_LABELS[option]}
               </button>
-            );
-          })}
+            ))}
+          </div>
+        </section>
+
+        <section className="question-block">
+          <h3>3. Wie aufwendig ist die Umsetzung?</h3>
+          <div className="choice-grid compact-grid">
+            {COMPLEXITY_OPTIONS.map((option) => (
+              <button className={complexity === option ? 'choice-pill selected' : 'choice-pill'} key={option} type="button" onClick={() => setComplexity(option)}>
+                {COMPLEXITY_LABELS[option]}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <label className="field-label">
+          Zielsystem / Integrationskontext
+          <select value={targetSystem} onChange={(event) => setTargetSystem(event.target.value)}>
+            {TARGET_SYSTEM_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+        </label>
+
+        <label className="field-label">
+          Notiz für den Report
+          <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="z.B. Kriterien für Freigabe mit Fachbereich klären" />
+        </label>
+
+        <div className={hasOpenItems ? 'decision-status open' : 'decision-status done'}>
+          {hasOpenItems ? <CircleHelp size={18} /> : <CheckCircle2 size={18} />}
+          <span>{hasOpenItems ? 'Wird als Klärungsbedarf im Report markiert.' : 'Vollständig bewertet.'}</span>
         </div>
-      </section>
 
-      <section className="question-block">
-        <h3>2. Welche Daten sind betroffen?</h3>
-        <div className="choice-grid compact-grid">
-          {PRIVACY_OPTIONS.map((option) => (
-            <button className={privacy === option ? 'choice-pill selected' : 'choice-pill'} key={option} type="button" onClick={() => setPrivacy(option)}>
-              {PRIVACY_LABELS[option]}
-            </button>
-          ))}
+        <div className="button-row sticky-actions">
+          <button type="button" className="secondary-button" onClick={onPrevious} disabled={currentIndex === 0}>Zurück</button>
+          <button type="button" className="secondary-button" onClick={() => saveCurrent('skipped')}><SkipForward size={16} /> Überspringen</button>
+          <button type="button" className="primary-button compact" onClick={saveAndNext} disabled={currentIndex === total - 1}>Speichern & weiter</button>
         </div>
-      </section>
 
-      <section className="question-block">
-        <h3>3. Wie aufwendig ist die Umsetzung?</h3>
-        <div className="choice-grid compact-grid">
-          {COMPLEXITY_OPTIONS.map((option) => (
-            <button className={complexity === option ? 'choice-pill selected' : 'choice-pill'} key={option} type="button" onClick={() => setComplexity(option)}>
-              {COMPLEXITY_LABELS[option]}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <label className="field-label">
-        Zielsystem / Integrationskontext
-        <select value={targetSystem} onChange={(event) => setTargetSystem(event.target.value)}>
-          {TARGET_SYSTEM_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-        </select>
-      </label>
-
-      <label className="field-label">
-        Notiz für den Report
-        <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="z.B. Kriterien für Freigabe mit Fachbereich klären" />
-      </label>
-
-      <div className={hasOpenItems ? 'decision-status open' : 'decision-status done'}>
-        {hasOpenItems ? <CircleHelp size={18} /> : <CheckCircle2 size={18} />}
-        <span>{hasOpenItems ? 'Wird als Klärungsbedarf im Report markiert.' : 'Vollständig bewertet.'}</span>
-      </div>
-
-      <div className="button-row sticky-actions">
-        <button type="button" className="secondary-button" onClick={onPrevious} disabled={currentIndex === 0}>Zurück</button>
-        <button type="button" className="secondary-button" onClick={() => saveCurrent('skipped')}><SkipForward size={16} /> Überspringen</button>
-        <button type="button" className="primary-button compact" onClick={saveAndNext} disabled={currentIndex === total - 1}>Speichern & weiter</button>
-      </div>
-
-      <button type="button" className="report-button" onClick={saveAndReport}>Aktuellen Stand als Report anzeigen</button>
+        <button type="button" className="report-button" onClick={saveAndReport}>Aktuellen Stand als Report anzeigen</button>
       </div>
     </aside>
   );

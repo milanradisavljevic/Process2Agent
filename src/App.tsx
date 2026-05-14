@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { BpmnViewer } from './components/BpmnViewer';
 import { FileDropZone } from './components/FileDropZone';
 import { InterviewPanel } from './components/InterviewPanel';
@@ -16,6 +16,10 @@ import type { AssessmentDecision, AssessmentProject, LLMConfig } from './types';
 export function App() {
   const [state, dispatch] = useReducer(assessmentReducer, initialAssessmentState);
   const [llmConfig, setLlmConfig] = useState<LLMConfig>(() => loadLLMConfig());
+  const [drawerWidth, setDrawerWidth] = useState(480);
+  const isResizing = useRef(false);
+  const resizeStartX = useRef(0);
+  const resizeStartWidth = useRef(0);
 
   const handleFileLoaded = useCallback((fileName: string, xml: string) => {
     try {
@@ -83,6 +87,21 @@ export function App() {
     dispatch({ type: 'save_decision', decision });
   }, []);
 
+  function handleResizeMove(e: MouseEvent) {
+    if (!isResizing.current) return;
+    const delta = resizeStartX.current - e.clientX;
+    const next = Math.min(Math.max(resizeStartWidth.current + delta, 320), 900);
+    setDrawerWidth(next);
+  }
+
+  function handleResizeEnd() {
+    isResizing.current = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    document.removeEventListener('mousemove', handleResizeMove);
+    document.removeEventListener('mouseup', handleResizeEnd);
+  }
+
   if (!state.project) {
     return <FileDropZone error={state.error} onFileLoaded={handleFileLoaded} />;
   }
@@ -108,7 +127,7 @@ export function App() {
     <main className="app-shell">
       <header className="app-header">
         <div>
-          <p className="eyebrow">process2agent</p>
+          <p className="brand">PROCESS2AGENT</p>
           <h1>{state.project.fileName}</h1>
           <p className="header-summary">
             {state.project.elements.length} Schritte · {countLanes(state.project)} Lanes
@@ -127,14 +146,16 @@ export function App() {
       </header>
 
       <div className="assessment-fullscreen">
-        <BpmnViewer
-          xml={state.project.xml}
-          elements={state.project.elements}
-          currentElementId={state.drawerOpen ? currentElement?.id : undefined}
-          decisions={state.decisions}
-          suggestions={state.project.suggestions}
-          onElementSelect={handleElementSelect}
-        />
+        <div className="viewer-panel">
+          <BpmnViewer
+            xml={state.project.xml}
+            elements={state.project.elements}
+            currentElementId={state.drawerOpen ? currentElement?.id : undefined}
+            decisions={state.decisions}
+            suggestions={state.project.suggestions}
+            onElementSelect={handleElementSelect}
+          />
+        </div>
 
         <QuickWinsView
           elements={state.project.elements}
@@ -146,8 +167,24 @@ export function App() {
       </div>
 
       {state.drawerOpen && currentElement && currentSuggestion && (
-        <div className="drawer-overlay" onClick={() => dispatch({ type: 'close_drawer' })}>
-          <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="drawer-overlay open" onClick={() => dispatch({ type: 'close_drawer' })}>
+          <div
+            className="drawer-panel open"
+            style={{ width: drawerWidth }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="drawer-resize-handle"
+              onMouseDown={(e) => {
+                isResizing.current = true;
+                resizeStartX.current = e.clientX;
+                resizeStartWidth.current = drawerWidth;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', handleResizeMove);
+                document.addEventListener('mouseup', handleResizeEnd);
+              }}
+            />
             <InterviewPanel
               element={currentElement}
               suggestion={currentSuggestion}
