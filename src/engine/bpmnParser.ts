@@ -40,6 +40,7 @@ export function parseBpmnElements(xml: string): ProcessElement[] {
 function toProcessElement(node: Element, laneAssignments: Map<string, string>): ProcessElement {
   const id = node.getAttribute('id') ?? crypto.randomUUID();
   const normalizedName = readNormalizedName(node, id);
+  const documentation = readDocumentation(node);
 
   return {
     id,
@@ -47,7 +48,16 @@ function toProcessElement(node: Element, laneAssignments: Map<string, string>): 
     bpmnType: toBpmnType(node.localName),
     laneName: laneAssignments.get(id),
     source: normalizedName.source,
+    ...(documentation ? { documentation } : {}),
   };
+}
+
+function readDocumentation(node: Element): string | undefined {
+  const docEl = Array.from(node.children).find(
+    (child) => child.localName === 'documentation'
+  );
+  const text = docEl?.textContent?.replace(/\s+/g, ' ').trim();
+  return text || undefined;
 }
 
 function toBpmnType(localName: string): string {
