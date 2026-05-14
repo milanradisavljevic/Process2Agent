@@ -1,11 +1,26 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle2, CircleHelp, SkipForward } from 'lucide-react';
+import { Users, Bot, GitPullRequest, GitBranch, Plug, Terminal, Bell, ScanText, Sparkles, HelpCircle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { COMPLEXITY_LABELS, PATTERN_HINTS, PATTERN_LABELS, PRIVACY_LABELS, TARGET_SYSTEM_OPTIONS } from '../data/mappingRules';
 import type { AgenticPattern, AssessmentDecision, AssessmentSuggestion, ComplexityClass, PrivacyLevel, ProcessElement } from '../types';
 
 const PATTERN_OPTIONS: AgenticPattern[] = ['agent_with_approval', 'human_in_the_loop', 'agent_autonomous', 'llm_generation', 'llm_classification', 'mcp_or_api_call', 'rule_based_automation', 'local_code_execution', 'notification_and_wait', 'needs_clarification'];
 const PRIVACY_OPTIONS: PrivacyLevel[] = ['no_pii', 'pseudonymized', 'pii_likely', 'pii_confirmed', 'unknown'];
 const COMPLEXITY_OPTIONS: ComplexityClass[] = ['low', 'medium', 'high', 'unknown'];
+
+const PATTERN_ICONS: Record<AgenticPattern, LucideIcon> = {
+  human_in_the_loop: Users,
+  agent_autonomous: Bot,
+  agent_with_approval: GitPullRequest,
+  rule_based_automation: GitBranch,
+  mcp_or_api_call: Plug,
+  local_code_execution: Terminal,
+  notification_and_wait: Bell,
+  llm_classification: ScanText,
+  llm_generation: Sparkles,
+  needs_clarification: HelpCircle,
+};
 
 interface InterviewPanelProps {
   element: ProcessElement;
@@ -81,12 +96,22 @@ export function InterviewPanel({ element, suggestion, decision, currentIndex, to
       <section className="question-block">
         <h3>1. Wie soll KI hier unterstützen?</h3>
         <div className="choice-grid pattern-grid">
-          {PATTERN_OPTIONS.map((option) => (
-            <button className={pattern === option ? 'choice-card selected' : 'choice-card'} key={option} type="button" onClick={() => setPattern(option)}>
-              <strong>{PATTERN_LABELS[option]}</strong>
-              <span>{PATTERN_HINTS[option]}</span>
-            </button>
-          ))}
+          {PATTERN_OPTIONS.map((option) => {
+            const Icon = PATTERN_ICONS[option];
+            return (
+              <button
+                className={pattern === option ? 'choice-card selected' : 'choice-card'}
+                data-pattern={option}
+                key={option}
+                type="button"
+                onClick={() => setPattern(option)}
+              >
+                <span className="card-icon"><Icon size={16} strokeWidth={2} /></span>
+                <strong>{PATTERN_LABELS[option]}</strong>
+                <span>{PATTERN_HINTS[option]}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
