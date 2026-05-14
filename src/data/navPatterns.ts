@@ -17,7 +17,7 @@ export const NAV_PATTERNS: DomainPattern[] = [
     suggestedPattern: 'llm_generation',
     suggestedPrivacy: 'unknown',
     suggestedComplexity: 'medium',
-    rationale: 'Dokument- und Textarbeit ist ein guter Kandidat fuer KI-Entwuerfe, sofern Quellen und Freigabe geregelt sind.',
+    rationale: 'Dokument- und Textarbeit ist ein guter Kandidat für KI-Entwürfe, sofern Quellen und Freigabe geregelt sind.',
   },
   {
     id: 'generic-communication',
@@ -26,16 +26,16 @@ export const NAV_PATTERNS: DomainPattern[] = [
     suggestedPattern: 'agent_with_approval',
     suggestedPrivacy: 'pii_likely',
     suggestedComplexity: 'medium',
-    rationale: 'Kommunikationsschritte koennen durch Entwurf, Zusammenfassung und Follow-up unterstuetzt werden; Empfaenger- und Kontaktdaten sind zu pruefen.',
+    rationale: 'Kommunikationsschritte können durch Entwurf, Zusammenfassung und Follow-up unterstützt werden; Empfänger- und Kontaktdaten sind zu prüfen.',
   },
   {
     id: 'generic-check',
-    label: 'Check/Pruefung',
+    label: 'Check/Prüfung',
     keywords: ['check', 'pruefung', 'prüfung', 'validieren', 'kontrolle', 'readiness', 'qualitaet', 'qualität'],
     suggestedPattern: 'llm_classification',
     suggestedPrivacy: 'unknown',
     suggestedComplexity: 'medium',
-    rationale: 'Pruefschritte eignen sich fuer KI-gestuetzte Vorbewertung, wenn Kriterien und Fehlerfolgen explizit gemacht werden.',
+    rationale: 'Prüfschritte eignen sich für KI-gestützte Vorbewertung, wenn Kriterien und Fehlerfolgen explizit gemacht werden.',
   },
   {
     id: 'generic-master-data',
@@ -44,7 +44,7 @@ export const NAV_PATTERNS: DomainPattern[] = [
     suggestedPattern: 'mcp_or_api_call',
     suggestedPrivacy: 'no_pii',
     suggestedComplexity: 'medium',
-    rationale: 'Stammdaten- und ERP-nahe Schritte sind primaer Integrationsfragen. Datenqualitaet und Freigabeprozess entscheiden.',
+    rationale: 'Stammdaten- und ERP-nahe Schritte sind primär Integrationsfragen. Datenqualität und Freigabeprozess entscheiden.',
   },
   {
     id: 'generic-booking',
@@ -62,7 +62,7 @@ export const NAV_PATTERNS: DomainPattern[] = [
     suggestedPattern: 'agent_with_approval',
     suggestedPrivacy: 'no_pii',
     suggestedComplexity: 'medium',
-    rationale: 'P2P-Bedarfe koennen durch Lagerbestand, Verbrauch und Lieferzeiten vorbereitet werden; Freigabe bleibt beim Einkauf.',
+    rationale: 'P2P-Bedarfe können durch Lagerbestand, Verbrauch und Lieferzeiten vorbereitet werden; Freigabe bleibt beim Einkauf.',
   },
   {
     id: 'p2p-approval',
@@ -71,7 +71,7 @@ export const NAV_PATTERNS: DomainPattern[] = [
     suggestedPattern: 'human_in_the_loop',
     suggestedPrivacy: 'unknown',
     suggestedComplexity: 'low',
-    rationale: 'Freigaben sind Kontrollpunkte. Ein Agent kann vorpruefen, die Entscheidung bleibt beim berechtigten Menschen.',
+    rationale: 'Freigaben sind Kontrollpunkte. Ein Agent kann vorprüfen, die Entscheidung bleibt beim berechtigten Menschen.',
   },
   {
     id: 'p2p-purchase-order',
@@ -89,7 +89,7 @@ export const NAV_PATTERNS: DomainPattern[] = [
     suggestedPattern: 'mcp_or_api_call',
     suggestedPrivacy: 'no_pii',
     suggestedComplexity: 'medium',
-    rationale: 'Wareneingaenge sind systemnahe Buchungen mit Mengenvalidierung und eignen sich fuer regelbasierte Vorpruefung.',
+    rationale: 'Wareneingänge sind systemnahe Buchungen mit Mengenvalidierung und eignen sich für regelbasierte Vorprüfung.',
   },
   {
     id: 'p2p-invoice',
@@ -98,7 +98,7 @@ export const NAV_PATTERNS: DomainPattern[] = [
     suggestedPattern: 'llm_classification',
     suggestedPrivacy: 'pii_likely',
     suggestedComplexity: 'high',
-    rationale: 'Rechnungspruefung und 3-Way-Match sind starke Kandidaten fuer Klassifikation und Anomalie-Erkennung.',
+    rationale: 'Rechnungsprüfung und 3-Way-Match sind starke Kandidaten für Klassifikation und Anomalie-Erkennung.',
   },
   {
     id: 'p2p-vendor',
@@ -107,7 +107,7 @@ export const NAV_PATTERNS: DomainPattern[] = [
     suggestedPattern: 'agent_with_approval',
     suggestedPrivacy: 'pii_likely',
     suggestedComplexity: 'medium',
-    rationale: 'Kreditorenstammdaten enthalten oft Kontaktpersonen. Aenderungen sollten menschlich freigegeben werden.',
+    rationale: 'Kreditorenstammdaten enthalten oft Kontaktpersonen. Änderungen sollten menschlich freigegeben werden.',
   },
   {
     id: 'p2p-posting',
@@ -125,6 +125,6 @@ export const NAV_PATTERNS: DomainPattern[] = [
     suggestedPattern: 'agent_with_approval',
     suggestedPrivacy: 'pii_likely',
     suggestedComplexity: 'high',
-    rationale: 'Zahlungen haben finanzielles Risiko. Agenten koennen vorbereiten, finale Freigabe bleibt menschlich.',
+    rationale: 'Zahlungen haben finanzielles Risiko. Agenten können vorbereiten, finale Freigabe bleibt menschlich.',
   },
 ];

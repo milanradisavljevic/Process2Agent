@@ -75,11 +75,11 @@ export function InterviewPanel({ element, suggestion, decision, currentIndex, to
       <div className={suggestion.source === 'fallback' ? 'suggestion-box neutral' : 'suggestion-box'}>
         <strong>{recommendationTitle}</strong>
         <p>{suggestion.rationale}</p>
-        {suggestion.matchedKeywords.length > 0 ? <small>Erkannt ueber: {suggestion.matchedKeywords.join(', ')}</small> : <small>Quelle: {suggestion.source}</small>}
+        {suggestion.matchedKeywords.length > 0 ? <small>Erkannt über: {suggestion.matchedKeywords.join(', ')}</small> : <small>Quelle: {suggestion.source}</small>}
       </div>
 
       <section className="question-block">
-        <h3>1. Wie soll KI hier unterstuetzen?</h3>
+        <h3>1. Wie soll KI hier unterstützen?</h3>
         <div className="choice-grid pattern-grid">
           {PATTERN_OPTIONS.map((option) => (
             <button className={pattern === option ? 'choice-card selected' : 'choice-card'} key={option} type="button" onClick={() => setPattern(option)}>
@@ -120,18 +120,18 @@ export function InterviewPanel({ element, suggestion, decision, currentIndex, to
       </label>
 
       <label className="field-label">
-        Notiz fuer den Report
-        <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="z.B. Kriterien fuer Freigabe mit Fachbereich klaeren" />
+        Notiz für den Report
+        <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="z.B. Kriterien für Freigabe mit Fachbereich klären" />
       </label>
 
       <div className={hasOpenItems ? 'decision-status open' : 'decision-status done'}>
         {hasOpenItems ? <CircleHelp size={18} /> : <CheckCircle2 size={18} />}
-        <span>{hasOpenItems ? 'Wird als Klaerungsbedarf im Report markiert.' : 'Vollstaendig bewertet.'}</span>
+        <span>{hasOpenItems ? 'Wird als Klärungsbedarf im Report markiert.' : 'Vollständig bewertet.'}</span>
       </div>
 
       <div className="button-row sticky-actions">
-        <button type="button" className="secondary-button" onClick={onPrevious} disabled={currentIndex === 0}>Zurueck</button>
-        <button type="button" className="secondary-button" onClick={() => saveCurrent('skipped')}><SkipForward size={16} /> Ueberspringen</button>
+        <button type="button" className="secondary-button" onClick={onPrevious} disabled={currentIndex === 0}>Zurück</button>
+        <button type="button" className="secondary-button" onClick={() => saveCurrent('skipped')}><SkipForward size={16} /> Überspringen</button>
         <button type="button" className="primary-button compact" onClick={saveAndNext} disabled={currentIndex === total - 1}>Speichern & weiter</button>
       </div>
 

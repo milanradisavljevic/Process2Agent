@@ -19,7 +19,7 @@ export function ScoreBar({ project, decisions }: ScoreBarProps) {
       </div>
       <div className="score-card">
         <ShieldCheck size={18} />
-        <span>{summary.localRequired} lokal / {summary.cloudCapable} cloud-faehig</span>
+        <span>{summary.localRequired} lokal / {summary.cloudCapable} cloud-fähig</span>
       </div>
       <div className="score-card">
         <AlertTriangle size={18} />

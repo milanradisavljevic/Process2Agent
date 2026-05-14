@@ -17,7 +17,7 @@ export function ReportPreview({ project, decisions, onBack }: ReportPreviewProps
   return (
     <main className="report-page">
       <div className="report-actions no-print">
-        <button type="button" className="secondary-button" onClick={onBack}>Zurueck zum Assessment</button>
+        <button type="button" className="secondary-button" onClick={onBack}>Zurück zum Assessment</button>
         <button type="button" className="primary-button compact" onClick={() => window.print()}>Drucken / als PDF speichern</button>
       </div>
 
@@ -31,23 +31,23 @@ export function ReportPreview({ project, decisions, onBack }: ReportPreviewProps
         <section>
           <h2>Zusammenfassung</h2>
           <p className="executive-summary">
-            Der Prozess enthaelt {summary.total} bewertbare Schritte. Nach aktuellem Stand sind {summary.aiSuitable} Schritte ({aiPercent}%) KI-geeignet,
-            {summary.humanLoop} Schritte bleiben bewusst menschlich kontrolliert und {summary.clarification} Punkte muessen vor einer Umsetzung geklaert werden.
+            Der Prozess enthält {summary.total} bewertbare Schritte. Nach aktuellem Stand sind {summary.aiSuitable} Schritte ({aiPercent}%) KI-geeignet,
+            {summary.humanLoop} Schritte bleiben bewusst menschlich kontrolliert und {summary.clarification} Punkte müssen vor einer Umsetzung geklärt werden.
           </p>
           <table>
             <tbody>
               <tr><th>Analysierte Schritte</th><td>{summary.total}</td></tr>
               <tr><th>KI-geeignet</th><td>{summary.aiSuitable}</td></tr>
               <tr><th>Mensch bleibt im Loop</th><td>{summary.humanLoop}</td></tr>
-              <tr><th>Klaerungsbedarf</th><td>{summary.clarification}</td></tr>
+              <tr><th>Klärungsbedarf</th><td>{summary.clarification}</td></tr>
               <tr><th>Schritte mit lokalem Routing</th><td>{summary.localRequired}</td></tr>
-              <tr><th>Cloud-faehig laut Nutzerangabe</th><td>{summary.cloudCapable}</td></tr>
+              <tr><th>Cloud-fähig laut Nutzerangabe</th><td>{summary.cloudCapable}</td></tr>
             </tbody>
           </table>
         </section>
 
         <section>
-          <h2>Klaerungsbedarf</h2>
+          <h2>Klärungsbedarf</h2>
           {clarificationItems.length === 0 ? (
             <p>Keine offenen Punkte dokumentiert.</p>
           ) : (
@@ -79,11 +79,11 @@ export function ReportPreview({ project, decisions, onBack }: ReportPreviewProps
                 <p><strong>BPMN-Typ:</strong> {element.bpmnType}</p>
                 <p><strong>Pattern:</strong> {decision ? PATTERN_LABELS[decision.pattern] : PATTERN_LABELS[suggestion.pattern]}</p>
                 <p><strong>Privacy:</strong> {decision ? PRIVACY_LABELS[decision.privacy] : PRIVACY_LABELS[suggestion.privacy]}</p>
-                <p><strong>Komplexitaet:</strong> {decision ? COMPLEXITY_LABELS[decision.complexity] : COMPLEXITY_LABELS[suggestion.complexity]}</p>
+                <p><strong>Komplexität:</strong> {decision ? COMPLEXITY_LABELS[decision.complexity] : COMPLEXITY_LABELS[suggestion.complexity]}</p>
                 <p><strong>Zielsystem:</strong> {decision?.targetSystem ?? 'Nicht bewertet'}</p>
-                <p><strong>Begruendung:</strong> {suggestion.rationale}</p>
+                <p><strong>Begründung:</strong> {suggestion.rationale}</p>
                 {decision?.note ? <p><strong>Notiz:</strong> {decision.note}</p> : null}
-                {!decision || decision.status !== 'completed' ? <p className="clarification">KLAERUNGSBEDARF: Entscheidung, Privacy, Komplexitaet oder Zielsystem ist offen.</p> : null}
+                {!decision || decision.status !== 'completed' ? <p className="clarification">KLÄRUNGSBEDARF: Entscheidung, Privacy, Komplexität oder Zielsystem ist offen.</p> : null}
               </div>
             );
           })}
@@ -91,7 +91,7 @@ export function ReportPreview({ project, decisions, onBack }: ReportPreviewProps
 
         <section>
           <h2>Hinweis</h2>
-          <p>Dieser Report dokumentiert menschliche Entscheidungen, unterstuetzt durch regelbasierte Analyse. Er ersetzt keine rechtliche Beratung, kein DSGVO-Audit und kein AI-Impact-Assessment nach EU AI Act.</p>
+          <p>Dieser Report dokumentiert menschliche Entscheidungen, unterstützt durch regelbasierte Analyse. Er ersetzt keine rechtliche Beratung, kein DSGVO-Audit und kein AI-Impact-Assessment nach EU AI Act.</p>
         </section>
       </article>
     </main>
@@ -106,7 +106,7 @@ function buildOpenReasons(decision?: AssessmentDecision): string[] {
   const reasons: string[] = [];
 
   if (decision.status === 'skipped') {
-    reasons.push('uebersprungen');
+    reasons.push('übersprungen');
   }
 
   if (decision.pattern === 'needs_clarification') {
@@ -118,12 +118,12 @@ function buildOpenReasons(decision?: AssessmentDecision): string[] {
   }
 
   if (decision.complexity === 'unknown') {
-    reasons.push('Komplexitaet offen');
+    reasons.push('Komplexität offen');
   }
 
   if (decision.targetSystem === 'Unklar') {
     reasons.push('Zielsystem offen');
   }
 
-  return reasons.length > 0 ? reasons : ['Entscheidung pruefen'];
+  return reasons.length > 0 ? reasons : ['Entscheidung prüfen'];
 }

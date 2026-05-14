@@ -31,9 +31,9 @@ export function FileDropZone({ onFileLoaded, error }: FileDropZoneProps) {
         <Upload size={34} strokeWidth={1.8} />
       </div>
       <h1>process2agent</h1>
-      <p>Ziehe eine BPMN-Datei hierher oder waehle einen Export aus Signavio, Camunda oder einem anderen BPMN-Tool.</p>
+      <p>Ziehe eine BPMN-Datei hierher oder wähle einen Export aus Signavio, Camunda oder einem anderen BPMN-Tool.</p>
       <label className="primary-button">
-        BPMN-Datei auswaehlen
+        BPMN-Datei auswählen
         <input
           accept=".bpmn,.xml"
           type="file"

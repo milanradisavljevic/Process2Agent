@@ -17,7 +17,7 @@ export function App() {
       const elements = parseBpmnElements(xml);
 
       if (elements.length === 0) {
-        dispatch({ type: 'set_error', error: 'Keine bewertbaren BPMN-Schritte gefunden. Bitte pruefe den Export.' });
+        dispatch({ type: 'set_error', error: 'Keine bewertbaren BPMN-Schritte gefunden. Bitte prüfe den Export.' });
         return;
       }
 
@@ -53,13 +53,13 @@ export function App() {
   const currentElement = state.project.elements[state.currentIndex];
 
   if (!currentElement) {
-    return <FileDropZone error="Der BPMN-Import wurde gelesen, aber der Assessment-State ist unvollstaendig. Bitte lade die Datei erneut." onFileLoaded={handleFileLoaded} />;
+    return <FileDropZone error="Der BPMN-Import wurde gelesen, aber der Assessment-State ist unvollständig. Bitte lade die Datei erneut." onFileLoaded={handleFileLoaded} />;
   }
 
   const currentSuggestion = state.project.suggestions[currentElement.id];
 
   if (!currentSuggestion) {
-    return <FileDropZone error="Der BPMN-Import wurde gelesen, aber die Vorschlaege konnten nicht erzeugt werden. Bitte lade die Datei erneut." onFileLoaded={handleFileLoaded} />;
+    return <FileDropZone error="Der BPMN-Import wurde gelesen, aber die Vorschläge konnten nicht erzeugt werden. Bitte lade die Datei erneut." onFileLoaded={handleFileLoaded} />;
   }
 
   return (

@@ -6,28 +6,28 @@ export const PATTERN_LABELS: Record<AgenticPattern, string> = {
   agent_with_approval: 'Agent mit Freigabe',
   rule_based_automation: 'Regelbasierte Automatisierung',
   mcp_or_api_call: 'MCP/API-Aufruf',
-  local_code_execution: 'Lokale Code-Ausfuehrung',
+  local_code_execution: 'Lokale Code-Ausführung',
   notification_and_wait: 'Benachrichtigen und warten',
   llm_classification: 'LLM-Klassifikation',
   llm_generation: 'LLM-Generierung',
-  needs_clarification: 'Klaerungsbedarf',
+  needs_clarification: 'Klärungsbedarf',
 };
 
 export const PATTERN_HINTS: Record<AgenticPattern, string> = {
   human_in_the_loop: 'KI kann vorbereiten oder zusammenfassen, aber die Entscheidung bleibt bewusst beim Menschen.',
-  agent_autonomous: 'Der Schritt ist klar begrenzt, risikoarm und kann nach Regeln eigenstaendig laufen.',
-  agent_with_approval: 'Agent bereitet vor, ein Mensch gibt frei. Gute Standardoption fuer Beratungssituationen.',
-  rule_based_automation: 'Keine generative KI noetig. Der Schritt sollte als Regel, Checkliste oder Workflow automatisiert werden.',
-  mcp_or_api_call: 'Der Kern ist Systemintegration. Entscheidend ist API-, MCP- oder RPA-Faehigkeit des Zielsystems.',
+  agent_autonomous: 'Der Schritt ist klar begrenzt, risikoarm und kann nach Regeln eigenständig laufen.',
+  agent_with_approval: 'Agent bereitet vor, ein Mensch gibt frei. Gute Standardoption für Beratungssituationen.',
+  rule_based_automation: 'Keine generative KI nötig. Der Schritt sollte als Regel, Checkliste oder Workflow automatisiert werden.',
+  mcp_or_api_call: 'Der Kern ist Systemintegration. Entscheidend ist API-, MCP- oder RPA-Fähigkeit des Zielsystems.',
   local_code_execution: 'Deterministische Logik oder Skript reicht. LLM bringt hier wenig Zusatznutzen.',
   notification_and_wait: 'Der Schritt liegt bei einem Menschen, Partner oder externen Ereignis. Agent kann nur anstossen oder nachhalten.',
-  llm_classification: 'Geeignet, wenn unstrukturierter Input bewertet, sortiert oder geprueft werden muss.',
-  llm_generation: 'Geeignet, wenn Text, Zusammenfassungen, Mails oder Dokumententwuerfe entstehen.',
-  needs_clarification: 'Noch nicht einordnen. Kriterien, Daten oder Verantwortlichkeit muessen im Gespraech geklaert werden.',
+  llm_classification: 'Geeignet, wenn unstrukturierter Input bewertet, sortiert oder geprüft werden muss.',
+  llm_generation: 'Geeignet, wenn Text, Zusammenfassungen, Mails oder Dokumententwürfe entstehen.',
+  needs_clarification: 'Noch nicht einordnen. Kriterien, Daten oder Verantwortlichkeit müssen im Gespräch geklärt werden.',
 };
 
 export const PRIVACY_LABELS: Record<PrivacyLevel, string> = {
-  pii_confirmed: 'Personenbezogene Daten bestaetigt',
+  pii_confirmed: 'Personenbezogene Daten bestätigt',
   pii_likely: 'PII wahrscheinlich',
   pseudonymized: 'Pseudonymisierte Daten',
   no_pii: 'Keine PII / Sachdaten',
@@ -49,7 +49,7 @@ export const MAPPING_RULES: MappingRule[] = [
     defaultPattern: 'agent_with_approval',
     defaultPrivacy: 'unknown',
     defaultComplexity: 'medium',
-    rationale: 'Generische BPMN Tasks beschreiben eine Arbeitseinheit ohne technische Spezialisierung. Fuer v1 ist Agent mit Freigabe der konservative Startpunkt.',
+    rationale: 'Generische BPMN Tasks beschreiben eine Arbeitseinheit ohne technische Spezialisierung. Für v1 ist Agent mit Freigabe der konservative Startpunkt.',
     interviewRequired: true,
   },
   {
@@ -57,7 +57,7 @@ export const MAPPING_RULES: MappingRule[] = [
     defaultPattern: 'human_in_the_loop',
     defaultPrivacy: 'unknown',
     defaultComplexity: 'unknown',
-    rationale: 'User Tasks sind menschliche Taetigkeiten. KI kann unterstuetzen, die Entscheidung bleibt zunaechst beim Menschen.',
+    rationale: 'User Tasks sind menschliche Tätigkeiten. KI kann unterstützen, die Entscheidung bleibt zunächst beim Menschen.',
     interviewRequired: true,
   },
   {
@@ -65,7 +65,7 @@ export const MAPPING_RULES: MappingRule[] = [
     defaultPattern: 'mcp_or_api_call',
     defaultPrivacy: 'unknown',
     defaultComplexity: 'medium',
-    rationale: 'Service Tasks sind Systemaufrufe. Die konkrete Machbarkeit haengt vom Zielsystem und dessen API ab.',
+    rationale: 'Service Tasks sind Systemaufrufe. Die konkrete Machbarkeit hängt vom Zielsystem und dessen API ab.',
     interviewRequired: true,
   },
   {
@@ -73,7 +73,7 @@ export const MAPPING_RULES: MappingRule[] = [
     defaultPattern: 'local_code_execution',
     defaultPrivacy: 'no_pii',
     defaultComplexity: 'low',
-    rationale: 'Script Tasks sind meist deterministische Berechnungen. Ein LLM ist dafuer nicht notwendig.',
+    rationale: 'Script Tasks sind meist deterministische Berechnungen. Ein LLM ist dafür nicht notwendig.',
     interviewRequired: false,
   },
   {
@@ -81,7 +81,7 @@ export const MAPPING_RULES: MappingRule[] = [
     defaultPattern: 'notification_and_wait',
     defaultPrivacy: 'unknown',
     defaultComplexity: 'low',
-    rationale: 'Manual Tasks liegen ausserhalb direkter Systemautomatisierung und werden als externe Aktivitaet behandelt.',
+    rationale: 'Manual Tasks liegen ausserhalb direkter Systemautomatisierung und werden als externe Aktivität behandelt.',
     interviewRequired: true,
   },
   {
@@ -89,7 +89,7 @@ export const MAPPING_RULES: MappingRule[] = [
     defaultPattern: 'needs_clarification',
     defaultPrivacy: 'unknown',
     defaultComplexity: 'unknown',
-    rationale: 'Gateways brauchen dokumentierte Entscheidungslogik. Ohne Kriterien bleibt der Schritt klaerungsbeduerftig.',
+    rationale: 'Gateways brauchen dokumentierte Entscheidungslogik. Ohne Kriterien bleibt der Schritt klärungsbedürftig.',
     interviewRequired: true,
   },
   {
@@ -97,7 +97,7 @@ export const MAPPING_RULES: MappingRule[] = [
     defaultPattern: 'notification_and_wait',
     defaultPrivacy: 'unknown',
     defaultComplexity: 'low',
-    rationale: 'Start Events beschreiben Ausloeser, aber keine inhaltliche Automatisierungsentscheidung.',
+    rationale: 'Start Events beschreiben Auslöser, aber keine inhaltliche Automatisierungsentscheidung.',
     interviewRequired: false,
   },
   {
@@ -115,6 +115,6 @@ export const FALLBACK_RULE: MappingRule = {
   defaultPattern: 'needs_clarification',
   defaultPrivacy: 'unknown',
   defaultComplexity: 'unknown',
-  rationale: 'Fuer diesen BPMN-Typ gibt es in v1 keine spezifische Regel. Der Schritt wird als offene Beratungsfrage markiert.',
+  rationale: 'Für diesen BPMN-Typ gibt es in v1 keine spezifische Regel. Der Schritt wird als offene Beratungsfrage markiert.',
   interviewRequired: true,
 };
