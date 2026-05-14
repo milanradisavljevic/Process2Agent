@@ -19,6 +19,9 @@ export function createSuggestion(element: ProcessElement): AssessmentSuggestion 
       rationale: matchedPattern.pattern.rationale,
       source: 'domain_enrichment',
       matchedKeywords: matchedPattern.hits,
+      implementation_hint: '',
+      risk: '',
+      quick_win: false,
     };
   }
 
@@ -30,6 +33,9 @@ export function createSuggestion(element: ProcessElement): AssessmentSuggestion 
     rationale: rule.rationale,
     source: rule === FALLBACK_RULE ? 'fallback' : 'bpmn_rule',
     matchedKeywords: [],
+    implementation_hint: '',
+    risk: '',
+    quick_win: false,
   };
 }
 

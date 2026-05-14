@@ -19,7 +19,7 @@ export type PrivacyLevel =
 
 export type ComplexityClass = 'low' | 'medium' | 'high' | 'unknown';
 
-export type AppView = 'import' | 'assessment' | 'report';
+export type AppView = 'import' | 'analyzing' | 'assessment' | 'report';
 
 export interface ProcessElement {
   id: string;
@@ -27,6 +27,7 @@ export interface ProcessElement {
   bpmnType: string;
   laneName?: string;
   source: 'name' | 'extension' | 'id';
+  documentation?: string;
 }
 
 export interface MappingRule {
@@ -55,8 +56,11 @@ export interface AssessmentSuggestion {
   privacy: PrivacyLevel;
   complexity: ComplexityClass;
   rationale: string;
-  source: 'bpmn_rule' | 'domain_enrichment' | 'fallback';
+  source: 'bpmn_rule' | 'domain_enrichment' | 'fallback' | 'llm';
   matchedKeywords: string[];
+  implementation_hint: string;
+  risk: string;
+  quick_win: boolean;
 }
 
 export interface AssessmentDecision {
@@ -84,3 +88,19 @@ export interface AssessmentProject {
   elements: ProcessElement[];
   suggestions: Record<string, AssessmentSuggestion>;
 }
+
+export interface LLMConfig {
+  provider: 'ollama' | 'anthropic' | 'none';
+  ollamaUrl: string;
+  ollamaModel: string;
+  anthropicApiKey: string;
+  anthropicModel: string;
+}
+
+export const DEFAULT_LLM_CONFIG: LLMConfig = {
+  provider: 'none',
+  ollamaUrl: 'http://localhost:11434',
+  ollamaModel: 'llama3.2',
+  anthropicApiKey: '',
+  anthropicModel: 'claude-sonnet-4-6',
+};
