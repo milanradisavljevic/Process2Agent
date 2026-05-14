@@ -81,7 +81,7 @@ export const MAPPING_RULES: MappingRule[] = [
     defaultPattern: 'notification_and_wait',
     defaultPrivacy: 'unknown',
     defaultComplexity: 'low',
-    rationale: 'Manual Tasks liegen ausserhalb direkter Systemautomatisierung und werden als externe Aktivität behandelt.',
+    rationale: 'Manual Tasks liegen außerhalb direkter Systemautomatisierung und werden als externe Aktivität behandelt.',
     interviewRequired: true,
   },
   {
@@ -105,7 +105,7 @@ export const MAPPING_RULES: MappingRule[] = [
     defaultPattern: 'notification_and_wait',
     defaultPrivacy: 'unknown',
     defaultComplexity: 'low',
-    rationale: 'End Events beenden den Prozess und werden fuer den Report dokumentiert.',
+    rationale: 'End Events beenden den Prozess und werden für den Report dokumentiert.',
     interviewRequired: false,
   },
 ];

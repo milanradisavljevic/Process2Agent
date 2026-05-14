@@ -84,7 +84,7 @@ export function BpmnViewer({ xml, elements, currentElementId, decisions, onEleme
           canvas.addMarker(element.id, 'completed-step');
         }
       } catch (error) {
-        console.warn(`BPMN-Marker fuer ${element.id} konnte nicht gesetzt werden.`, error);
+        console.warn(`BPMN-Marker für ${element.id} konnte nicht gesetzt werden.`, error);
       }
     });
   }, [currentElementId, decisions, elements, isReady]);
