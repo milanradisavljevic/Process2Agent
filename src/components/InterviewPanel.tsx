@@ -32,9 +32,10 @@ interface InterviewPanelProps {
   onNext: () => void;
   onPrevious: () => void;
   onReport: () => void;
+  onClose: () => void;
 }
 
-export function InterviewPanel({ element, suggestion, decision, currentIndex, total, onSave, onNext, onPrevious, onReport }: InterviewPanelProps) {
+export function InterviewPanel({ element, suggestion, decision, currentIndex, total, onSave, onNext, onPrevious, onReport, onClose }: InterviewPanelProps) {
   const [pattern, setPattern] = useState<AgenticPattern>(decision?.pattern ?? suggestion.pattern);
   const [privacy, setPrivacy] = useState<PrivacyLevel>(decision?.privacy ?? suggestion.privacy);
   const [complexity, setComplexity] = useState<ComplexityClass>(decision?.complexity ?? suggestion.complexity);
@@ -80,17 +81,39 @@ export function InterviewPanel({ element, suggestion, decision, currentIndex, to
 
   return (
     <aside className="interview-panel">
+      <div className="drawer-header">
+        <div>
+          <p className="drawer-eyebrow">{element.laneName ?? ''}</p>
+          <h2 className="drawer-title">{element.name}</h2>
+        </div>
+        <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Schließen">
+          ✕
+        </button>
+      </div>
+
+      <div className="interview-panel-body">
       <div className="step-meta">
         <span>Schritt {currentIndex + 1} von {total}</span>
         <span>{element.bpmnType}</span>
       </div>
-      <h2>{element.name}</h2>
       <p className="muted">{element.laneName ? `Lane: ${element.laneName}` : 'Keine Lane erkannt'} · Quelle: {sourceLabel(element.source)}</p>
 
       <div className={suggestion.source === 'fallback' ? 'suggestion-box neutral' : 'suggestion-box'}>
         <strong>{recommendationTitle}</strong>
         <p>{suggestion.rationale}</p>
         {suggestion.matchedKeywords.length > 0 ? <small>Erkannt über: {suggestion.matchedKeywords.join(', ')}</small> : <small>Quelle: {suggestion.source}</small>}
+        {suggestion.implementation_hint && (
+          <div className="hint-box">
+            <strong>Umsetzungshinweis</strong>
+            <p>{suggestion.implementation_hint}</p>
+          </div>
+        )}
+        {suggestion.risk && (
+          <div className="risk-box">
+            <strong>Risiko</strong>
+            <p>{suggestion.risk}</p>
+          </div>
+        )}
       </div>
 
       <section className="question-block">
@@ -161,6 +184,7 @@ export function InterviewPanel({ element, suggestion, decision, currentIndex, to
       </div>
 
       <button type="button" className="report-button" onClick={saveAndReport}>Aktuellen Stand als Report anzeigen</button>
+      </div>
     </aside>
   );
 }

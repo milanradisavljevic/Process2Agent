@@ -1,23 +1,28 @@
-import { useCallback, useReducer } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import { BpmnViewer } from './components/BpmnViewer';
 import { FileDropZone } from './components/FileDropZone';
 import { InterviewPanel } from './components/InterviewPanel';
 import { ReportPreview } from './components/ReportPreview';
 import { ScoreBar } from './components/ScoreBar';
+import { AnalyzingView } from './components/AnalyzingView';
+import { QuickWinsView } from './components/QuickWinsView';
+import { LLMConfigPanel, loadLLMConfig } from './components/LLMConfigPanel';
 import { createSuggestions } from './engine/domainEnrichment';
 import { parseBpmnElements } from './engine/bpmnParser';
+import { analyzeBatch } from './engine/llmService';
 import { assessmentReducer, initialAssessmentState } from './state/assessmentReducer';
-import type { AssessmentDecision, AssessmentProject } from './types';
+import type { AssessmentDecision, AssessmentProject, LLMConfig } from './types';
 
 export function App() {
   const [state, dispatch] = useReducer(assessmentReducer, initialAssessmentState);
+  const [llmConfig, setLlmConfig] = useState<LLMConfig>(() => loadLLMConfig());
 
   const handleFileLoaded = useCallback((fileName: string, xml: string) => {
     try {
       const elements = parseBpmnElements(xml);
 
       if (elements.length === 0) {
-        dispatch({ type: 'set_error', error: 'Keine bewertbaren BPMN-Schritte gefunden. Bitte prüfe den Export.' });
+        dispatch({ type: 'set_error', error: 'Keine bewertbaren BPMN-Schritte gefunden.' });
         return;
       }
 
@@ -30,12 +35,48 @@ export function App() {
 
       dispatch({ type: 'load_project', project });
     } catch (error) {
-      dispatch({ type: 'set_error', error: error instanceof Error ? error.message : 'Die BPMN-Datei konnte nicht gelesen werden.' });
+      dispatch({
+        type: 'set_error',
+        error: error instanceof Error ? error.message : 'Die BPMN-Datei konnte nicht gelesen werden.',
+      });
     }
   }, []);
 
+  // Trigger LLM analysis after load_project sets view to 'analyzing'
+  useEffect(() => {
+    if (state.view !== 'analyzing' || !state.project) {
+      return;
+    }
+
+    if (llmConfig.provider === 'none') {
+      dispatch({ type: 'llm_error', error: '' });
+      return;
+    }
+
+    let cancelled = false;
+
+    analyzeBatch(state.project.elements, llmConfig)
+      .then((suggestions) => {
+        if (!cancelled) {
+          dispatch({ type: 'llm_success', suggestions });
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          dispatch({
+            type: 'llm_error',
+            error: error instanceof Error ? error.message : 'LLM-Analyse fehlgeschlagen',
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [state.view, state.project, llmConfig]);
+
   const handleElementSelect = useCallback((elementId: string) => {
-    dispatch({ type: 'select_element', elementId });
+    dispatch({ type: 'open_drawer', elementId });
   }, []);
 
   const handleSaveDecision = useCallback((decision: AssessmentDecision) => {
@@ -46,77 +87,86 @@ export function App() {
     return <FileDropZone error={state.error} onFileLoaded={handleFileLoaded} />;
   }
 
+  if (state.view === 'analyzing') {
+    return <AnalyzingView elementCount={state.project.elements.length} />;
+  }
+
   if (state.view === 'report') {
-    return <ReportPreview project={state.project} decisions={state.decisions} onBack={() => dispatch({ type: 'back_to_assessment' })} />;
+    return (
+      <ReportPreview
+        project={state.project}
+        decisions={state.decisions}
+        onBack={() => dispatch({ type: 'back_to_assessment' })}
+      />
+    );
   }
 
   const currentElement = state.project.elements[state.currentIndex];
-
-  if (!currentElement) {
-    return <FileDropZone error="Der BPMN-Import wurde gelesen, aber der Assessment-State ist unvollständig. Bitte lade die Datei erneut." onFileLoaded={handleFileLoaded} />;
-  }
-
-  const currentSuggestion = state.project.suggestions[currentElement.id];
-
-  if (!currentSuggestion) {
-    return <FileDropZone error="Der BPMN-Import wurde gelesen, aber die Vorschläge konnten nicht erzeugt werden. Bitte lade die Datei erneut." onFileLoaded={handleFileLoaded} />;
-  }
+  const currentSuggestion = currentElement ? state.project.suggestions[currentElement.id] : undefined;
 
   return (
     <main className="app-shell">
       <header className="app-header">
         <div>
-          <p className="eyebrow">process2agent v1 PoC</p>
+          <p className="eyebrow">process2agent</p>
           <h1>{state.project.fileName}</h1>
-          <p className="header-summary">{state.project.elements.length} Schritte erkannt · {countLanes(state.project)} Lanes · {countFallbackNames(state.project)} technische Namen</p>
+          <p className="header-summary">
+            {state.project.elements.length} Schritte · {countLanes(state.project)} Lanes
+            {state.llmStatus === 'done' && (
+              <span className="badge badge-ok"> · KI-Analyse abgeschlossen</span>
+            )}
+            {state.llmStatus === 'error' && state.llmError && (
+              <span className="badge badge-warn"> · Regelbasiert (LLM-Fehler)</span>
+            )}
+          </p>
         </div>
-        <ScoreBar project={state.project} decisions={state.decisions} />
+        <div className="header-actions">
+          <LLMConfigPanel config={llmConfig} onConfigChange={setLlmConfig} />
+          <ScoreBar project={state.project} decisions={state.decisions} />
+        </div>
       </header>
 
-      <section className="assessment-layout">
-        <div className="viewer-panel">
-          <BpmnViewer
-            xml={state.project.xml}
-            elements={state.project.elements}
-            currentElementId={currentElement.id}
-            decisions={state.decisions}
-            onElementSelect={handleElementSelect}
-          />
-          <div className="element-debug-list">
-            {state.project.elements.map((element, index) => (
-              <button
-                className={element.id === currentElement.id ? 'active' : ''}
-                key={element.id}
-                type="button"
-                onClick={() => dispatch({ type: 'select_element', elementId: element.id })}
-              >
-                <span className={`step-status ${state.decisions[element.id]?.status ?? 'open'}`} />
-                <span>{index + 1}. {element.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="assessment-fullscreen">
+        <BpmnViewer
+          xml={state.project.xml}
+          elements={state.project.elements}
+          currentElementId={state.drawerOpen ? currentElement?.id : undefined}
+          decisions={state.decisions}
+          suggestions={state.project.suggestions}
+          onElementSelect={handleElementSelect}
+        />
 
-        <InterviewPanel
-          element={currentElement}
-          suggestion={currentSuggestion}
-          decision={state.decisions[currentElement.id]}
-          currentIndex={state.currentIndex}
-          total={state.project.elements.length}
-          onSave={handleSaveDecision}
-          onNext={() => dispatch({ type: 'next_step' })}
-          onPrevious={() => dispatch({ type: 'previous_step' })}
+        <QuickWinsView
+          elements={state.project.elements}
+          suggestions={state.project.suggestions}
+          decisions={state.decisions}
+          onElementSelect={handleElementSelect}
           onReport={() => dispatch({ type: 'show_report' })}
         />
-      </section>
+      </div>
+
+      {state.drawerOpen && currentElement && currentSuggestion && (
+        <div className="drawer-overlay" onClick={() => dispatch({ type: 'close_drawer' })}>
+          <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
+            <InterviewPanel
+              element={currentElement}
+              suggestion={currentSuggestion}
+              decision={state.decisions[currentElement.id]}
+              currentIndex={state.currentIndex}
+              total={state.project.elements.length}
+              onSave={handleSaveDecision}
+              onNext={() => dispatch({ type: 'next_step' })}
+              onPrevious={() => dispatch({ type: 'previous_step' })}
+              onReport={() => dispatch({ type: 'show_report' })}
+              onClose={() => dispatch({ type: 'close_drawer' })}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }
 
 function countLanes(project: AssessmentProject): number {
-  return new Set(project.elements.map((element) => element.laneName).filter(Boolean)).size;
-}
-
-function countFallbackNames(project: AssessmentProject): number {
-  return project.elements.filter((element) => element.source === 'id').length;
+  return new Set(project.elements.map((el) => el.laneName).filter(Boolean)).size;
 }
