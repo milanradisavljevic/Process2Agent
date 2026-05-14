@@ -45,8 +45,8 @@ export function FileDropZone({ onFileLoaded, error }: FileDropZoneProps) {
             }}
           />
         </label>
-        <p style={{ margin: '.75rem 0 0', color: '#64748b', fontSize: '.82rem' }}>
-          oder BPMN-Datei hierher ziehen · Signavio, Camunda, BPMN.io
+        <p className="drop-hint">
+          Oder BPMN-Datei hierher ziehen · Signavio, Camunda, BPMN.io
         </p>
       </div>
       {error ? <p className="error-text">{error}</p> : null}

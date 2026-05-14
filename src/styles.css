@@ -21,6 +21,8 @@
   --c-warn-bg: #fffbeb;
   --c-err: #dc2626;
   --c-err-bg: #fef2f2;
+  --c-bg: var(--c-canvas);
+  --c-text-muted: var(--c-muted);
 
   /* Pattern accent colors */
   --p-human:    #2563eb;
@@ -125,6 +127,12 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .drop-zone-card.drag-over {
   border-color: rgba(147,197,253,.55);
   background: rgba(255,255,255,.07);
+}
+
+.drop-hint {
+  margin: .75rem 0 0;
+  color: rgba(255, 255, 255, .45);
+  font-size: .82rem;
 }
 
 .drop-zone .primary-button {
@@ -1056,6 +1064,19 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   overflow-y: auto;
   box-shadow: -4px 0 32px rgba(0, 0, 0, .18);
   animation: drawer-slide-in .2s ease;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Reset interview-panel box styling inside drawer — drawer-panel handles all of it */
+.drawer-panel .interview-panel {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  max-height: none;
+  padding: 0;
+  background: transparent;
 }
 
 @keyframes drawer-slide-in {
@@ -1105,6 +1126,17 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 
 .interview-panel-body {
   padding: 1rem 1.25rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.hint-box p,
+.risk-box p,
+.suggestion-box p,
+.qw-card-rationale,
+.drawer-title {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* =========================================
@@ -1329,6 +1361,51 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   border-radius: .25rem;
   padding: .4rem .6rem;
   line-height: 1.4;
+}
+
+/* =========================================
+   DARK MODE
+   ========================================= */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-ink: #f8fafc;
+    --c-text: #e2e8f0;
+    --c-muted: #94a3b8;
+    --c-subtle: #64748b;
+    --c-surface: #1e293b;
+    --c-canvas: #0f172a;
+    --c-bg: #0f172a;
+    --c-border: #334155;
+    --c-border-strong: #475569;
+    --c-brand-bg: rgba(26, 86, 219, .18);
+    --c-ok-bg: rgba(22, 163, 74, .14);
+    --c-warn-bg: rgba(180, 83, 9, .14);
+    --c-err-bg: rgba(220, 38, 38, .14);
+  }
+
+  .bpmn-canvas { background: #1a2638; }
+
+  .sticky-actions {
+    background: linear-gradient(rgba(30, 41, 59, 0), #1e293b 40%);
+  }
+
+  .suggestion-box { border-color: #334155; }
+  .suggestion-box.neutral { border-color: #475569; }
+  .executive-summary { border-color: #334155; }
+
+  .choice-card[data-pattern="human_in_the_loop"].selected    { background: rgba(37, 99, 235, .15); }
+  .choice-card[data-pattern="agent_autonomous"].selected      { background: rgba(124, 58, 237, .15); }
+  .choice-card[data-pattern="agent_with_approval"].selected   { background: rgba(5, 150, 105, .15); }
+  .choice-card[data-pattern="rule_based_automation"].selected { background: rgba(8, 145, 178, .15); }
+  .choice-card[data-pattern="mcp_or_api_call"].selected       { background: rgba(234, 88, 12, .15); }
+  .choice-card[data-pattern="local_code_execution"].selected  { background: rgba(180, 83, 9, .15); }
+  .choice-card[data-pattern="notification_and_wait"].selected { background: rgba(67, 56, 202, .15); }
+  .choice-card[data-pattern="llm_classification"].selected    { background: rgba(190, 24, 93, .15); }
+  .choice-card[data-pattern="llm_generation"].selected        { background: rgba(147, 51, 234, .15); }
+  .choice-card[data-pattern="needs_clarification"].selected   { background: rgba(220, 38, 38, .15); }
+
+  .choice-card.selected { background: rgba(26, 86, 219, .15); }
 }
 
 /* =========================================
