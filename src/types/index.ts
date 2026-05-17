@@ -1,3 +1,16 @@
+export type DataStructure = 'structured' | 'semi_structured' | 'unstructured';
+export type DecisionComplexity = 'rule_based' | 'pattern_recognition' | 'judgment' | 'creative';
+export type SystemAccess = 'api' | 'rpa' | 'none' | 'no_system';
+export type ExceptionRate = 'standard_dominant' | 'frequent_exceptions' | 'every_case_different';
+export type AutomationLevel = 0 | 1 | 2 | 3;
+
+export interface AutomationDimensions {
+  dataStructure: DataStructure;
+  decisionComplexity: DecisionComplexity;
+  systemAccess: SystemAccess;
+  exceptionRate: ExceptionRate;
+}
+
 export type AgenticPattern =
   | 'human_in_the_loop'
   | 'agent_autonomous'
@@ -61,6 +74,18 @@ export interface AssessmentSuggestion {
   implementation_hint: string;
   risk: string;
   quick_win: boolean;
+  dimensions?: AutomationDimensions;
+}
+
+export interface RiskChecklist {
+  containsPII: 'yes' | 'no' | 'unclear';
+  decisionReversible: 'yes' | 'no';
+  humanApprovalExists: 'yes' | 'no';
+}
+
+export interface ChangeImpact {
+  affectedSystems: string;
+  changeManagementRequired: 'yes' | 'no';
 }
 
 export interface AssessmentDecision {
@@ -71,6 +96,9 @@ export interface AssessmentDecision {
   targetSystem: string;
   note: string;
   status: 'completed' | 'needs_clarification' | 'skipped';
+  riskChecklist?: RiskChecklist;
+  changeImpact?: ChangeImpact;
+  dimensions?: AutomationDimensions;
 }
 
 export interface AssessmentSummary {

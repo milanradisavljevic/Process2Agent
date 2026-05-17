@@ -1,73 +1,109 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { BpmnViewer } from './components/BpmnViewer';
 import { FileDropZone } from './components/FileDropZone';
+import { ImportModal } from './components/ImportModal';
 import { InterviewPanel } from './components/InterviewPanel';
 import { ReportPreview } from './components/ReportPreview';
 import { ScoreBar } from './components/ScoreBar';
 import { AnalyzingView } from './components/AnalyzingView';
 import { QuickWinsView } from './components/QuickWinsView';
 import { LLMConfigPanel, loadLLMConfig } from './components/LLMConfigPanel';
+import { WorkspaceLanding } from './components/WorkspaceLanding';
 import { createSuggestions } from './engine/domainEnrichment';
 import { parseBpmnElements } from './engine/bpmnParser';
 import { analyzeBatch } from './engine/llmService';
 import { assessmentReducer, initialAssessmentState } from './state/assessmentReducer';
+import { initialWorkspaceState, workspaceReducer } from './state/workspaceReducer';
+import { deleteProcess, exportAll, getAllProcesses, getWorkspace, importAll, saveProcess, saveWorkspace } from './storage/db';
 import type { AssessmentDecision, AssessmentProject, LLMConfig } from './types';
+import type { Area, ProcessBusinessCase, ProcessEntry, ProcessStatus, ProcessSummary, SandboxTest, Workspace, WorkspaceSettings } from './types/workspace';
+
+interface PendingImport {
+  fileName: string;
+  xml: string;
+}
 
 export function App() {
-  const [state, dispatch] = useReducer(assessmentReducer, initialAssessmentState);
-  const [llmConfig, setLlmConfig] = useState<LLMConfig>(() => loadLLMConfig());
+  const [assessmentState, assessmentDispatch] = useReducer(assessmentReducer, initialAssessmentState);
+  const [workspaceState, workspaceDispatch] = useReducer(workspaceReducer, initialWorkspaceState);
+  const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
   const [drawerWidth, setDrawerWidth] = useState(480);
+  const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
   const isResizing = useRef(false);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(0);
+  const saveTimer = useRef<number | undefined>(undefined);
 
-  const handleFileLoaded = useCallback((fileName: string, xml: string) => {
-    try {
-      const elements = parseBpmnElements(xml);
+  const currentProcessId = workspaceState.currentView.page === 'assessment' || workspaceState.currentView.page === 'report'
+    ? workspaceState.currentView.processId
+    : null;
+  const currentProcess = useMemo(
+    () => workspaceState.processes.find((process) => process.id === currentProcessId),
+    [currentProcessId, workspaceState.processes],
+  );
+  const llmConfig = useMemo(
+    () => workspaceState.workspace ? settingsToLLMConfig(workspaceState.workspace.settings) : loadLLMConfig(),
+    [workspaceState.workspace],
+  );
 
-      if (elements.length === 0) {
-        dispatch({ type: 'set_error', error: 'Keine bewertbaren BPMN-Schritte gefunden.' });
-        return;
+  async function saveAndDispatchProcess(process: ProcessEntry) {
+    const saved = await saveProcess(process);
+    workspaceDispatch({ type: 'PROCESS_SAVED', process: saved });
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadWorkspace() {
+      try {
+        const existingWorkspace = await getWorkspace();
+        const workspace = existingWorkspace ?? createDefaultWorkspace();
+        if (!existingWorkspace) {
+          await saveWorkspace(workspace);
+        }
+        const processes = await getAllProcesses();
+
+        if (!cancelled) {
+          workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          workspaceDispatch({
+            type: 'SET_ERROR',
+            error: error instanceof Error ? error.message : 'Workspace konnte nicht geladen werden.',
+          });
+        }
       }
-
-      const project: AssessmentProject = {
-        fileName,
-        xml,
-        elements,
-        suggestions: createSuggestions(elements),
-      };
-
-      dispatch({ type: 'load_project', project });
-    } catch (error) {
-      dispatch({
-        type: 'set_error',
-        error: error instanceof Error ? error.message : 'Die BPMN-Datei konnte nicht gelesen werden.',
-      });
     }
+
+    void loadWorkspace();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Trigger LLM analysis after load_project sets view to 'analyzing'
   useEffect(() => {
-    if (state.view !== 'analyzing' || !state.project) {
+    if (assessmentState.view !== 'analyzing' || !assessmentState.project) {
       return;
     }
 
     if (llmConfig.provider === 'none') {
-      dispatch({ type: 'llm_error', error: '' });
+      assessmentDispatch({ type: 'llm_error', error: '' });
       return;
     }
 
     let cancelled = false;
 
-    analyzeBatch(state.project.elements, llmConfig)
+    analyzeBatch(assessmentState.project.elements, llmConfig)
       .then((suggestions) => {
         if (!cancelled) {
-          dispatch({ type: 'llm_success', suggestions });
+          assessmentDispatch({ type: 'llm_success', suggestions });
         }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          dispatch({
+          assessmentDispatch({
             type: 'llm_error',
             error: error instanceof Error ? error.message : 'LLM-Analyse fehlgeschlagen',
           });
@@ -77,15 +113,220 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, [state.view, state.project, llmConfig]);
+  }, [assessmentState.view, assessmentState.project, llmConfig]);
 
-  const handleElementSelect = useCallback((elementId: string) => {
-    dispatch({ type: 'open_drawer', elementId });
+  useEffect(() => {
+    if (!currentProcess || !assessmentState.project || workspaceState.currentView.page !== 'assessment') {
+      return;
+    }
+
+    const project = assessmentState.project;
+    window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => {
+      const nextProcess = processFromAssessment(currentProcess, project, assessmentState.decisions);
+      void saveAndDispatchProcess(nextProcess);
+    }, 2000);
+
+    return () => window.clearTimeout(saveTimer.current);
+  }, [assessmentState.decisions, assessmentState.project, currentProcess, workspaceState.currentView.page]);
+
+  const handleFileLoaded = useCallback((fileName: string, xml: string) => {
+    setPendingImport({ fileName, xml });
+  }, []);
+
+  const handleCreateArea = useCallback((name?: string): Area | null => {
+    if (!workspaceState.workspace) return null;
+
+    const areaName = name ?? window.prompt('Name des neuen Bereichs')?.trim();
+    if (!areaName) return null;
+
+    const area: Area = {
+      id: crypto.randomUUID(),
+      name: areaName,
+      icon: 'folder',
+      color: 'var(--text-secondary)',
+      sortOrder: workspaceState.workspace.areas.length,
+      processIds: [],
+    };
+    const workspace = { ...workspaceState.workspace, areas: [...workspaceState.workspace.areas, area] };
+    workspaceDispatch({ type: 'AREA_CREATED', area });
+    void saveWorkspace(workspace);
+    return area;
+  }, [workspaceState.workspace]);
+
+  const handleImportProcess = useCallback(async (areaId: string, processName: string, startAnalysis: boolean) => {
+    if (!pendingImport || !workspaceState.workspace) return;
+
+    try {
+      const elements = parseBpmnElements(pendingImport.xml);
+
+      if (elements.length === 0) {
+        workspaceDispatch({ type: 'SET_ERROR', error: 'Keine bewertbaren BPMN-Schritte gefunden.' });
+        return;
+      }
+
+      const suggestions = startAnalysis ? createSuggestions(elements) : {};
+      const now = new Date().toISOString();
+      const process: ProcessEntry = {
+        id: crypto.randomUUID(),
+        areaId,
+        name: processName,
+        description: '',
+        bpmnXml: pendingImport.xml,
+        status: startAnalysis ? 'analyzed' : 'imported',
+        tags: [],
+        createdAt: now,
+        updatedAt: now,
+        steps: elements,
+        suggestions,
+        decisions: {},
+        summary: summarizeProcess(elements, suggestions, {}, undefined),
+      };
+      const savedProcess = await saveProcess(process);
+      const workspace = addProcessToWorkspaceArea(workspaceState.workspace, areaId, savedProcess.id);
+      await saveWorkspace(workspace);
+      workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes: [savedProcess, ...workspaceState.processes] });
+      setPendingImport(null);
+
+      if (startAnalysis) {
+        assessmentDispatch({ type: 'load_project', project: projectFromProcess(savedProcess) });
+        workspaceDispatch({ type: 'NAVIGATE', view: { page: 'assessment', processId: savedProcess.id } });
+      } else {
+        workspaceDispatch({ type: 'NAVIGATE', view: { page: 'landing' } });
+      }
+    } catch (error) {
+      workspaceDispatch({
+        type: 'SET_ERROR',
+        error: error instanceof Error ? error.message : 'Die BPMN-Datei konnte nicht gelesen werden.',
+      });
+    }
+  }, [pendingImport, workspaceState.processes, workspaceState.workspace]);
+
+  const handleOpenProcess = useCallback(async (processId: string) => {
+    const process = workspaceState.processes.find((item) => item.id === processId);
+    if (!process) return;
+
+    workspaceDispatch({ type: 'NAVIGATE', view: { page: 'assessment', processId } });
+
+    if (Object.keys(process.suggestions).length === 0) {
+      const suggestions = createSuggestions(process.steps);
+      const nextProcess = await saveProcess({ ...process, suggestions, summary: summarizeProcess(process.steps, suggestions, process.decisions, process.businessCase) });
+      workspaceDispatch({ type: 'PROCESS_SAVED', process: nextProcess });
+      assessmentDispatch({ type: 'load_project', project: projectFromProcess(nextProcess) });
+      return;
+    }
+
+    assessmentDispatch({ type: 'open_project', project: projectFromProcess(process), decisions: process.decisions });
+  }, [workspaceState.processes]);
+
+  const handleDeleteProcess = useCallback(async (processId: string) => {
+    if (!window.confirm('Diesen Prozess wirklich löschen?')) return;
+    await deleteProcess(processId);
+    if (workspaceState.workspace) {
+      const workspace = {
+        ...workspaceState.workspace,
+        areas: workspaceState.workspace.areas.map((area) => (
+          area.processIds.includes(processId)
+            ? { ...area, processIds: area.processIds.filter((id) => id !== processId) }
+            : area
+        )),
+      };
+      await saveWorkspace(workspace);
+      workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes: workspaceState.processes.filter((p) => p.id !== processId) });
+    } else {
+      workspaceDispatch({ type: 'PROCESS_DELETED', processId });
+    }
+  }, [workspaceState.workspace, workspaceState.processes]);
+
+  const handleStatusChange = useCallback(async (processId: string, status: ProcessStatus) => {
+    const process = workspaceState.processes.find((item) => item.id === processId);
+    if (!process) return;
+    await saveAndDispatchProcess({ ...process, status });
+  }, [saveAndDispatchProcess, workspaceState.processes]);
+
+  const handleDeleteArea = useCallback(async (areaId: string) => {
+    if (!workspaceState.workspace) return;
+    const area = workspaceState.workspace.areas.find((a) => a.id === areaId);
+    if (!area) return;
+    if (!window.confirm(`Bereich "${area.name}" und alle darin enthaltenen Prozesse wirklich löschen?`)) return;
+
+    for (const processId of area.processIds) {
+      await deleteProcess(processId);
+    }
+
+    const workspace = {
+      ...workspaceState.workspace,
+      areas: workspaceState.workspace.areas.filter((a) => a.id !== areaId),
+    };
+    await saveWorkspace(workspace);
+    workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes: workspaceState.processes.filter((p) => p.areaId !== areaId) });
+  }, [workspaceState.workspace, workspaceState.processes]);
+
+  const handleRenameArea = useCallback((area: Area) => {
+    if (!workspaceState.workspace) return;
+    const workspace = {
+      ...workspaceState.workspace,
+      areas: workspaceState.workspace.areas.map((item) => item.id === area.id ? area : item),
+    };
+    workspaceDispatch({ type: 'AREA_UPDATED', area });
+    void saveWorkspace(workspace);
+  }, [workspaceState.workspace]);
+
+  const handleLLMConfigChange = useCallback((config: LLMConfig) => {
+    if (!workspaceState.workspace) return;
+    const settings = llmConfigToSettings(workspaceState.workspace.settings, config);
+    const workspace = { ...workspaceState.workspace, settings };
+    workspaceDispatch({ type: 'SETTINGS_UPDATED', settings });
+    void saveWorkspace(workspace);
+  }, [workspaceState.workspace]);
+
+  const handleExport = useCallback(async () => {
+    const json = await exportAll();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `process2agent-${new Date().toISOString().slice(0, 10)}.p2a.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleImportWorkspace = useCallback(async (file: File) => {
+    if (!window.confirm('Vorhandene Daten werden überschrieben. Fortfahren?')) return;
+    await importAll(await file.text());
+    const workspace = await getWorkspace();
+    const processes = await getAllProcesses();
+    if (workspace) {
+      workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes });
+    }
   }, []);
 
   const handleSaveDecision = useCallback((decision: AssessmentDecision) => {
-    dispatch({ type: 'save_decision', decision });
+    assessmentDispatch({ type: 'save_decision', decision });
   }, []);
+
+  const handleSaveBusinessCase = useCallback((businessCase: ProcessBusinessCase) => {
+    if (!currentProcess) return;
+    const nextProcess: ProcessEntry = {
+      ...currentProcess,
+      businessCase,
+      summary: summarizeProcess(currentProcess.steps, currentProcess.suggestions, currentProcess.decisions, businessCase),
+    };
+    void saveAndDispatchProcess(nextProcess);
+  }, [currentProcess, saveAndDispatchProcess]);
+
+  const handleSaveSandboxTest = useCallback((test: SandboxTest) => {
+    if (!currentProcess) return;
+    const sandboxTests = [...(currentProcess.sandboxTests ?? []).filter((t) => t.id !== test.id), test];
+    const nextProcess: ProcessEntry = { ...currentProcess, sandboxTests };
+    void saveAndDispatchProcess(nextProcess);
+  }, [currentProcess, saveAndDispatchProcess]);
+
+  const handleShowReport = useCallback(() => {
+    if (!currentProcessId) return;
+    assessmentDispatch({ type: 'show_report' });
+    workspaceDispatch({ type: 'NAVIGATE', view: { page: 'report', processId: currentProcessId } });
+  }, [currentProcessId]);
 
   function handleResizeMove(e: MouseEvent) {
     if (!isResizing.current) return;
@@ -102,72 +343,121 @@ export function App() {
     document.removeEventListener('mouseup', handleResizeEnd);
   }
 
-  if (!state.project) {
-    return <FileDropZone error={state.error} onFileLoaded={handleFileLoaded} />;
+  if (workspaceState.loading || !workspaceState.workspace) {
+    return <div className="view-transition"><AnalyzingView elementCount={0} /></div>;
   }
 
-  if (state.view === 'analyzing') {
-    return <AnalyzingView elementCount={state.project.elements.length} />;
-  }
-
-  if (state.view === 'report') {
+  if (workspaceState.currentView.page === 'import') {
+    const workspace = workspaceState.workspace;
     return (
-      <ReportPreview
-        project={state.project}
-        decisions={state.decisions}
-        onBack={() => dispatch({ type: 'back_to_assessment' })}
-      />
+      <div className="view-transition">
+        <FileDropZone error={workspaceState.error ?? undefined} onFileLoaded={handleFileLoaded} />
+        {pendingImport ? (
+          <ImportModal
+            fileName={pendingImport.fileName}
+            areas={workspace.areas}
+            targetAreaId={workspaceState.currentView.targetAreaId}
+            onCancel={() => setPendingImport(null)}
+            onCreateArea={(name) => handleCreateArea(name) ?? workspace.areas[0]}
+            onImport={handleImportProcess}
+          />
+        ) : null}
+      </div>
     );
   }
 
-  const currentElement = state.project.elements[state.currentIndex];
-  const currentSuggestion = currentElement ? state.project.suggestions[currentElement.id] : undefined;
+  if (workspaceState.currentView.page === 'landing') {
+    return (
+      <div className="view-transition"><WorkspaceLanding
+        workspace={workspaceState.workspace}
+        processes={workspaceState.processes}
+        error={workspaceState.error}
+        onImport={(areaId) => workspaceDispatch({ type: 'NAVIGATE', view: { page: 'import', targetAreaId: areaId } })}
+        onCreateArea={() => { handleCreateArea(); }}
+        onRenameArea={handleRenameArea}
+        onDeleteArea={handleDeleteArea}
+        onOpenProcess={handleOpenProcess}
+        onDeleteProcess={handleDeleteProcess}
+        onStatusChange={handleStatusChange}
+        onExport={handleExport}
+        onImportWorkspace={handleImportWorkspace}
+      /></div>
+    );
+  }
+
+  if (!assessmentState.project) {
+    return <div className="view-transition"><AnalyzingView elementCount={0} /></div>;
+  }
+
+  if (assessmentState.view === 'analyzing') {
+    return <div className="view-transition"><AnalyzingView elementCount={assessmentState.project.elements.length} /></div>;
+  }
+
+  if (workspaceState.currentView.page === 'report' || assessmentState.view === 'report') {
+    return (
+      <div className="view-transition"><ReportPreview
+        project={assessmentState.project}
+        decisions={assessmentState.decisions}
+        process={currentProcess ?? undefined}
+        onBack={() => workspaceDispatch({ type: 'NAVIGATE', view: { page: 'landing' } })}
+      /></div>
+    );
+  }
+
+  const currentElement = assessmentState.project.elements[assessmentState.currentIndex];
+  const currentSuggestion = currentElement ? assessmentState.project.suggestions[currentElement.id] : undefined;
+  const areaName = workspaceState.workspace.areas.find((area) => area.id === currentProcess?.areaId)?.name;
 
   return (
-    <main className="app-shell">
+    <main className="app-shell view-transition">
       <header className="app-header">
         <div>
           <p className="brand">PROCESS2AGENT</p>
-          <h1>{state.project.fileName}</h1>
+          <h1>{currentProcess?.name ?? assessmentState.project.fileName}</h1>
           <p className="header-summary">
-            {state.project.elements.length} Schritte · {countLanes(state.project)} Lanes
-            {state.llmStatus === 'done' && (
+            {areaName ? `${areaName} · ` : ''}{assessmentState.project.elements.length} Schritte · {countLanes(assessmentState.project)} Lanes
+            {assessmentState.llmStatus === 'done' && (
               <span className="badge badge-ok"> · KI-Analyse abgeschlossen</span>
             )}
-            {state.llmStatus === 'error' && state.llmError && (
+            {assessmentState.llmStatus === 'error' && assessmentState.llmError && (
               <span className="badge badge-warn"> · Regelbasiert (LLM-Fehler)</span>
             )}
           </p>
         </div>
         <div className="header-actions">
-          <LLMConfigPanel config={llmConfig} onConfigChange={setLlmConfig} />
-          <ScoreBar project={state.project} decisions={state.decisions} />
+          <button type="button" className="secondary-button" onClick={() => workspaceDispatch({ type: 'NAVIGATE', view: { page: 'landing' } })}>Zurück zum Workspace</button>
+          <LLMConfigPanel config={llmConfig} onConfigChange={handleLLMConfigChange} />
+          <ScoreBar project={assessmentState.project} decisions={assessmentState.decisions} />
         </div>
       </header>
 
       <div className="assessment-fullscreen">
         <div className="viewer-panel">
           <BpmnViewer
-            xml={state.project.xml}
-            elements={state.project.elements}
-            currentElementId={state.drawerOpen ? currentElement?.id : undefined}
-            decisions={state.decisions}
-            suggestions={state.project.suggestions}
-            onElementSelect={handleElementSelect}
+            xml={assessmentState.project.xml}
+            elements={assessmentState.project.elements}
+            currentElementId={assessmentState.drawerOpen ? currentElement?.id : undefined}
+            hoveredElementId={hoveredElementId}
+            decisions={assessmentState.decisions}
+            suggestions={assessmentState.project.suggestions}
+            onElementSelect={(elementId) => assessmentDispatch({ type: 'open_drawer', elementId })}
+            onElementHover={setHoveredElementId}
           />
         </div>
 
         <QuickWinsView
-          elements={state.project.elements}
-          suggestions={state.project.suggestions}
-          decisions={state.decisions}
-          onElementSelect={handleElementSelect}
-          onReport={() => dispatch({ type: 'show_report' })}
+          elements={assessmentState.project.elements}
+          suggestions={assessmentState.project.suggestions}
+          decisions={assessmentState.decisions}
+          hoveredElementId={hoveredElementId}
+          onElementSelect={(elementId) => assessmentDispatch({ type: 'open_drawer', elementId })}
+          onElementHover={setHoveredElementId}
+          onReport={handleShowReport}
         />
       </div>
 
-      {state.drawerOpen && currentElement && currentSuggestion && (
-        <div className="drawer-overlay open" onClick={() => dispatch({ type: 'close_drawer' })}>
+      {assessmentState.drawerOpen && currentElement && currentSuggestion && (
+        <div className="drawer-overlay open" onClick={() => assessmentDispatch({ type: 'close_drawer' })}>
           <div
             className="drawer-panel open"
             style={{ width: drawerWidth }}
@@ -188,20 +478,146 @@ export function App() {
             <InterviewPanel
               element={currentElement}
               suggestion={currentSuggestion}
-              decision={state.decisions[currentElement.id]}
-              currentIndex={state.currentIndex}
-              total={state.project.elements.length}
+              decision={assessmentState.decisions[currentElement.id]}
+              currentIndex={assessmentState.currentIndex}
+              total={assessmentState.project.elements.length}
+              process={currentProcess ?? undefined}
+              llmConfig={llmConfig}
+              defaultHourlyRates={workspaceState.workspace?.settings.defaultHourlyRates}
+              changeImpactEnabled={workspaceState.workspace?.settings.changeImpactEnabled ?? false}
               onSave={handleSaveDecision}
-              onNext={() => dispatch({ type: 'next_step' })}
-              onPrevious={() => dispatch({ type: 'previous_step' })}
-              onReport={() => dispatch({ type: 'show_report' })}
-              onClose={() => dispatch({ type: 'close_drawer' })}
+              onSaveBusinessCase={handleSaveBusinessCase}
+              onSaveSandboxTest={handleSaveSandboxTest}
+              onNext={() => assessmentDispatch({ type: 'next_step' })}
+              onPrevious={() => assessmentDispatch({ type: 'previous_step' })}
+              onReport={handleShowReport}
+              onClose={() => assessmentDispatch({ type: 'close_drawer' })}
             />
           </div>
         </div>
       )}
     </main>
   );
+}
+
+function createDefaultWorkspace(): Workspace {
+  const config = loadLLMConfig();
+  const now = new Date().toISOString();
+
+  return {
+    id: crypto.randomUUID(),
+    name: 'Mein Workspace',
+    areas: [{
+      id: crypto.randomUUID(),
+      name: 'Allgemein',
+      icon: 'folder',
+      color: 'var(--text-secondary)',
+      sortOrder: 0,
+      processIds: [],
+    }],
+    settings: llmConfigToSettings({
+      defaultCurrency: 'EUR',
+      defaultHourlyRates: {},
+      llmProvider: 'none',
+      llmConfig: {},
+      locale: 'de',
+      changeImpactEnabled: false,
+    }, config),
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function projectFromProcess(process: ProcessEntry): AssessmentProject {
+  return {
+    fileName: process.name,
+    xml: process.bpmnXml,
+    elements: process.steps,
+    suggestions: process.suggestions,
+  };
+}
+
+function processFromAssessment(
+  process: ProcessEntry,
+  project: AssessmentProject,
+  decisions: Record<string, AssessmentDecision>,
+): ProcessEntry {
+  return {
+    ...process,
+    name: project.fileName,
+    bpmnXml: project.xml,
+    steps: project.elements,
+    suggestions: project.suggestions,
+    decisions,
+    summary: summarizeProcess(project.elements, project.suggestions, decisions, process.businessCase),
+  };
+}
+
+function summarizeProcess(
+  elements: AssessmentProject['elements'],
+  suggestions: AssessmentProject['suggestions'],
+  decisions: Record<string, AssessmentDecision>,
+  businessCase?: ProcessBusinessCase,
+): ProcessSummary {
+  const laneNames = Array.from(new Set(elements.map((element) => element.laneName).filter((lane): lane is string => Boolean(lane))));
+  const automationPatterns = new Set(['agent_autonomous', 'agent_with_approval', 'llm_classification', 'llm_generation', 'mcp_or_api_call', 'rule_based_automation', 'local_code_execution']);
+
+  let estimatedAnnualSavings: number | undefined;
+  if (businessCase) {
+    let total = 0;
+    for (const step of elements) {
+      const bc = businessCase.stepCases[step.id];
+      if (bc) {
+        total += (bc.frequencyPerYear * bc.minutesPerExecution / 60) * bc.hourlyRate * bc.automationDegree;
+      }
+    }
+    if (total > 0) estimatedAnnualSavings = Math.round(total);
+  }
+
+  return {
+    totalSteps: elements.length,
+    quickWins: elements.filter((element) => suggestions[element.id]?.quick_win).length,
+    automationPotential: elements.filter((element) => automationPatterns.has((decisions[element.id]?.pattern ?? suggestions[element.id]?.pattern) ?? '')).length,
+    humanInLoop: elements.filter((element) => (decisions[element.id]?.pattern ?? suggestions[element.id]?.pattern) === 'human_in_the_loop').length,
+    clarificationNeeded: elements.filter((element) => !decisions[element.id] || decisions[element.id].status !== 'completed').length,
+    estimatedAnnualSavings,
+    laneCount: laneNames.length,
+    laneNames,
+  };
+}
+
+function addProcessToWorkspaceArea(workspace: Workspace, areaId: string, processId: string): Workspace {
+  return {
+    ...workspace,
+    areas: workspace.areas.map((area) => (
+      area.id === areaId && !area.processIds.includes(processId)
+        ? { ...area, processIds: [...area.processIds, processId] }
+        : area
+    )),
+  };
+}
+
+function settingsToLLMConfig(settings: WorkspaceSettings): LLMConfig {
+  return {
+    provider: settings.llmProvider,
+    ollamaUrl: settings.llmConfig.ollamaUrl ?? 'http://localhost:11434',
+    ollamaModel: settings.llmConfig.ollamaModel ?? 'llama3.2',
+    anthropicApiKey: settings.llmConfig.anthropicApiKey ?? '',
+    anthropicModel: settings.llmConfig.anthropicModel ?? 'claude-sonnet-4-6',
+  };
+}
+
+function llmConfigToSettings(settings: WorkspaceSettings, config: LLMConfig): WorkspaceSettings {
+  return {
+    ...settings,
+    llmProvider: config.provider,
+    llmConfig: {
+      anthropicApiKey: config.anthropicApiKey,
+      anthropicModel: config.anthropicModel,
+      ollamaUrl: config.ollamaUrl,
+      ollamaModel: config.ollamaModel,
+    },
+  };
 }
 
 function countLanes(project: AssessmentProject): number {

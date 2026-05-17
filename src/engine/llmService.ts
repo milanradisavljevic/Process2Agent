@@ -1,6 +1,6 @@
 import type {
-  AgenticPattern, AssessmentSuggestion, ComplexityClass,
-  LLMConfig, PrivacyLevel, ProcessElement,
+  AgenticPattern, AssessmentSuggestion, AutomationDimensions, ComplexityClass,
+  DataStructure, DecisionComplexity, ExceptionRate, LLMConfig, PrivacyLevel, ProcessElement, SystemAccess,
 } from '../types';
 
 const VALID_PATTERNS = new Set<AgenticPattern>([
@@ -10,6 +10,10 @@ const VALID_PATTERNS = new Set<AgenticPattern>([
 ]);
 const VALID_PRIVACY = new Set<PrivacyLevel>(['pii_confirmed', 'pii_likely', 'pseudonymized', 'no_pii', 'unknown']);
 const VALID_COMPLEXITY = new Set<ComplexityClass>(['low', 'medium', 'high', 'unknown']);
+const VALID_DATA_STRUCTURE = new Set<DataStructure>(['structured', 'semi_structured', 'unstructured']);
+const VALID_DECISION = new Set<DecisionComplexity>(['rule_based', 'pattern_recognition', 'judgment', 'creative']);
+const VALID_SYSTEM_ACCESS = new Set<SystemAccess>(['api', 'rpa', 'none', 'no_system']);
+const VALID_EXCEPTION_RATE = new Set<ExceptionRate>(['standard_dominant', 'frequent_exceptions', 'every_case_different']);
 
 export function buildBatchPrompt(elements: ProcessElement[]): string {
   const steps = elements.map((el, i) => {
@@ -33,8 +37,20 @@ Antworte NUR mit einem JSON-Array. Pro Schritt ein Objekt:
   "rationale": "<2-3 Sätze Begründung auf Deutsch>",
   "implementation_hint": "<konkreter Hinweis: welches System, welcher Endpoint, welche Voraussetzung — kein generisches 'API verwenden'>",
   "risk": "<was kann schiefgehen, auf Deutsch>",
-  "quick_win": true|false
+  "quick_win": true|false,
+  "dimensions": {
+    "dataStructure": "structured|semi_structured|unstructured",
+    "decisionComplexity": "rule_based|pattern_recognition|judgment|creative",
+    "systemAccess": "api|rpa|none|no_system",
+    "exceptionRate": "standard_dominant|frequent_exceptions|every_case_different"
+  }
 }
+
+dimensions-Legende:
+- dataStructure: structured=Datenbankfelder/Formulare/APIs, semi_structured=PDFs mit Layout/Vorlagen-Mails, unstructured=Freitext/Gespräche
+- decisionComplexity: rule_based=klare Regel (Betrag>X), pattern_recognition=Anomalie/Abweichung erkennen, judgment=Erfahrungsurteil, creative=kreativ/strategisch
+- systemAccess: api=REST/OData/SOAP vorhanden, rpa=UI-Automatisierung möglich, none=kein maschineller Zugang, no_system=rein menschliche Tätigkeit
+- exceptionRate: standard_dominant=>90% Standardfälle, frequent_exceptions=30-50% Sonderfälle, every_case_different=jeder Fall anders
 
 quick_win=true nur wenn: hoher Automatisierungsnutzen UND complexity=low.
 Alle IDs: ${ids}
@@ -86,6 +102,7 @@ async function callAnthropic(prompt: string, config: LLMConfig): Promise<string>
       'Content-Type': 'application/json',
       'x-api-key': config.anthropicApiKey,
       'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
       model: config.anthropicModel,
@@ -109,6 +126,38 @@ async function callAnthropic(prompt: string, config: LLMConfig): Promise<string>
   return text;
 }
 
+export async function analyzeSandboxDocument(
+  extractedText: string,
+  stepName: string,
+  pattern: string,
+  config: LLMConfig,
+): Promise<{ summary: string; entities: string[]; confidence: number; recommendation: string }> {
+  const { buildSandboxPrompt } = await import('./sandboxPrompt');
+  const prompt = buildSandboxPrompt(extractedText, stepName, pattern);
+
+  let responseText: string;
+  if (config.provider === 'ollama') {
+    responseText = await callOllama(prompt, config);
+  } else if (config.provider === 'anthropic') {
+    responseText = await callAnthropic(prompt, config);
+  } else {
+    throw new Error('Kein LLM konfiguriert');
+  }
+
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('LLM-Antwort enthält kein gültiges JSON-Objekt');
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+  return {
+    summary: typeof parsed.summary === 'string' ? parsed.summary : '',
+    entities: Array.isArray(parsed.entities) ? parsed.entities.filter((e): e is string => typeof e === 'string') : [],
+    confidence: typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : 0,
+    recommendation: typeof parsed.recommendation === 'string' ? parsed.recommendation : '',
+  };
+}
+
 export function parseLLMResponse(
   responseText: string,
   elements: ProcessElement[],
@@ -130,6 +179,18 @@ export function parseLLMResponse(
       continue;
     }
 
+    const rawDims = item['dimensions'] as Record<string, unknown> | undefined;
+    const dimensions: AutomationDimensions | undefined = rawDims ? {
+      dataStructure: VALID_DATA_STRUCTURE.has(rawDims['dataStructure'] as DataStructure)
+        ? (rawDims['dataStructure'] as DataStructure) : 'semi_structured',
+      decisionComplexity: VALID_DECISION.has(rawDims['decisionComplexity'] as DecisionComplexity)
+        ? (rawDims['decisionComplexity'] as DecisionComplexity) : 'judgment',
+      systemAccess: VALID_SYSTEM_ACCESS.has(rawDims['systemAccess'] as SystemAccess)
+        ? (rawDims['systemAccess'] as SystemAccess) : 'none',
+      exceptionRate: VALID_EXCEPTION_RATE.has(rawDims['exceptionRate'] as ExceptionRate)
+        ? (rawDims['exceptionRate'] as ExceptionRate) : 'frequent_exceptions',
+    } : undefined;
+
     suggestions[id] = {
       elementId: id,
       pattern: VALID_PATTERNS.has(item['pattern'] as AgenticPattern)
@@ -147,6 +208,7 @@ export function parseLLMResponse(
       quick_win: item['quick_win'] === true,
       source: 'llm',
       matchedKeywords: [],
+      dimensions,
     };
   }
 

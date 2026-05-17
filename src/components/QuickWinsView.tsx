@@ -12,12 +12,14 @@ interface QuickWinsViewProps {
   elements: ProcessElement[];
   suggestions: Record<string, AssessmentSuggestion>;
   decisions: Record<string, AssessmentDecision>;
+  hoveredElementId?: string | null;
   onElementSelect: (elementId: string) => void;
+  onElementHover?: (elementId: string | null) => void;
   onReport: () => void;
 }
 
 export function QuickWinsView({
-  elements, suggestions, decisions, onElementSelect, onReport,
+  elements, suggestions, decisions, hoveredElementId, onElementSelect, onElementHover, onReport,
 }: QuickWinsViewProps) {
   const categorized = useMemo(() => {
     const quickWins: ProcessElement[] = [];
@@ -57,9 +59,11 @@ export function QuickWinsView({
               <button
                 key={el.id}
                 type="button"
-                className={`element-card ${category}`}
+                className={`element-card ${category} ${hoveredElementId === el.id ? 'hovered' : ''}`}
                 style={{ animationDelay: `${index * 40}ms` }}
                 onClick={() => onElementSelect(el.id)}
+                onMouseEnter={() => onElementHover?.(el.id)}
+                onMouseLeave={() => onElementHover?.(null)}
               >
                 <div className="element-card-name">{el.name}</div>
                 {el.laneName && (

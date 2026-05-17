@@ -16,13 +16,15 @@ interface BpmnViewerProps {
   xml: string;
   elements: ProcessElement[];
   currentElementId?: string;
+  hoveredElementId?: string | null;
   decisions: Record<string, AssessmentDecision>;
   suggestions: Record<string, AssessmentSuggestion>;
   onElementSelect: (elementId: string) => void;
+  onElementHover?: (elementId: string | null) => void;
 }
 
 export function BpmnViewer({
-  xml, elements, currentElementId, decisions, suggestions, onElementSelect,
+  xml, elements, currentElementId, hoveredElementId, decisions, suggestions, onElementSelect, onElementHover,
 }: BpmnViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<NavigatedViewer | null>(null);
@@ -54,6 +56,20 @@ export function BpmnViewer({
             onElementSelect(id);
           }
         });
+        if (onElementHover) {
+          viewer.get('eventBus').on('element.hover', (event) => {
+            const id = event.element?.id;
+            if (id && elements.some((el) => el.id === id)) {
+              onElementHover(id);
+            }
+          });
+          viewer.get('eventBus').on('element.out', (event) => {
+            const id = event.element?.id;
+            if (id && elements.some((el) => el.id === id)) {
+              onElementHover(null);
+            }
+          });
+        }
         setIsReady(true);
       })
       .catch((error: unknown) => {
@@ -75,36 +91,47 @@ export function BpmnViewer({
     }
 
     const canvas = viewerRef.current?.get('canvas');
-
-    if (!canvas) {
-      return;
-    }
+    if (!canvas) return;
 
     elements.forEach((element) => {
       try {
         ALL_MARKERS.forEach((cls) => canvas.removeMarker(element.id, cls));
-
-        const decision = decisions[element.id];
-        const suggestion = suggestions[element.id];
-
-        if (element.id === currentElementId) {
-          canvas.addMarker(element.id, 'current-step');
-        } else if (decision?.status === 'completed') {
-          canvas.addMarker(element.id, 'completed-step');
-        } else if (decision?.status === 'needs_clarification' || decision?.status === 'skipped') {
-          canvas.addMarker(element.id, 'clarification-step');
-        } else if (suggestion?.quick_win) {
-          canvas.addMarker(element.id, 'quick-win-marker');
-        } else if (suggestion && AUTOMATION_PATTERNS.has(suggestion.pattern)) {
-          canvas.addMarker(element.id, 'potential-marker');
-        } else if (suggestion) {
-          canvas.addMarker(element.id, 'human-marker');
-        }
-      } catch (error) {
-        console.warn(`BPMN-Marker für ${element.id} konnte nicht gesetzt werden.`, error);
+      } catch {
+        // ignore
       }
     });
-  }, [currentElementId, decisions, elements, isReady, suggestions]);
+
+    // Reveal wave: stagger marker application by element index
+    const timers: number[] = [];
+    elements.forEach((element, index) => {
+      timers.push(window.setTimeout(() => {
+        try {
+          const decision = decisions[element.id];
+          const suggestion = suggestions[element.id];
+
+          if (element.id === currentElementId) {
+            canvas.addMarker(element.id, 'current-step');
+          } else if (element.id === hoveredElementId) {
+            canvas.addMarker(element.id, 'hover-step');
+          } else if (decision?.status === 'completed') {
+            canvas.addMarker(element.id, 'completed-step');
+          } else if (decision?.status === 'needs_clarification' || decision?.status === 'skipped') {
+            canvas.addMarker(element.id, 'clarification-step');
+          } else if (suggestion?.quick_win) {
+            canvas.addMarker(element.id, 'quick-win-marker');
+          } else if (suggestion && AUTOMATION_PATTERNS.has(suggestion.pattern)) {
+            canvas.addMarker(element.id, 'potential-marker');
+          } else if (suggestion) {
+            canvas.addMarker(element.id, 'human-marker');
+          }
+        } catch (error) {
+          console.warn(`BPMN-Marker für ${element.id} konnte nicht gesetzt werden.`, error);
+        }
+      }, index * 80));
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, [currentElementId, hoveredElementId, decisions, elements, isReady, suggestions]);
 
   return (
     <div className="bpmn-viewer-wrap">

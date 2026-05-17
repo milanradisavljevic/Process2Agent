@@ -1,10 +1,12 @@
 import { COMPLEXITY_LABELS, PATTERN_LABELS, PRIVACY_LABELS } from '../data/mappingRules';
 import { summarizeAssessment } from '../engine/reportGenerator';
 import type { AssessmentDecision, AssessmentProject } from '../types';
+import type { ProcessEntry } from '../types/workspace';
 
 interface ReportPreviewProps {
   project: AssessmentProject;
   decisions: Record<string, AssessmentDecision>;
+  process?: ProcessEntry;
   onBack: () => void;
 }
 
@@ -54,7 +56,7 @@ function DonutChart({ aiSuitable, humanLoop, clarification }: {
   );
 }
 
-export function ReportPreview({ project, decisions, onBack }: ReportPreviewProps) {
+export function ReportPreview({ project, decisions, process, onBack }: ReportPreviewProps) {
   const summary = summarizeAssessment(project, decisions);
   const createdAt = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date());
   const clarificationItems = project.elements.filter((element) => decisions[element.id]?.status !== 'completed');
@@ -161,6 +163,108 @@ export function ReportPreview({ project, decisions, onBack }: ReportPreviewProps
           })}
         </section>
 
+        {process?.businessCase && Object.keys(process.businessCase.stepCases).length > 0 && (
+          <section>
+            <h2>Business Case</h2>
+            <table className="report-table">
+              <thead>
+                <tr><th>Schritt</th><th>Häufigkeit/Jahr</th><th>Minuten</th><th>Rolle</th><th>Stundensatz</th><th>Automatisierung</th><th>Einsparung/Jahr</th></tr>
+              </thead>
+              <tbody>
+                {project.elements.map((el) => {
+                  const bc = process.businessCase?.stepCases[el.id];
+                  if (!bc) return null;
+                  const cost = (bc.frequencyPerYear * bc.minutesPerExecution / 60) * bc.hourlyRate;
+                  const saving = cost * bc.automationDegree;
+                  return (
+                    <tr key={el.id}>
+                      <td>{el.name}</td>
+                      <td>{bc.frequencyPerYear}</td>
+                      <td>{bc.minutesPerExecution}</td>
+                      <td>{bc.role}</td>
+                      <td>{formatCurrency(bc.hourlyRate)}</td>
+                      <td>{Math.round(bc.automationDegree * 100)}%</td>
+                      <td><strong>{formatCurrency(saving)}</strong></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {process.summary.estimatedAnnualSavings ? (
+              <p className="report-total">Gesamtes Einsparungspotenzial: <strong>{formatCurrency(process.summary.estimatedAnnualSavings)}</strong> pro Jahr</p>
+            ) : null}
+          </section>
+        )}
+
+        {process?.sandboxTests && process.sandboxTests.length > 0 && (
+          <section>
+            <h2>Validierung (Sandbox)</h2>
+            <div className="report-sandbox-list">
+              {process.sandboxTests.map((test) => {
+                const result = test.structuredResult as { summary?: string; entities?: string[]; confidence?: number; recommendation?: string } | undefined;
+                const el = project.elements.find((e) => e.id === test.stepId);
+                return (
+                  <div key={test.id} className={`report-sandbox-item verdict-${test.userVerdict}`}>
+                    <p><strong>{el?.name ?? 'Unbekannter Schritt'}</strong> · {test.inputFileName} · {test.inputType.toUpperCase()}</p>
+                    {result?.summary && <p>{result.summary}</p>}
+                    {typeof result?.confidence === 'number' && <p>Confidence: {Math.round(result.confidence * 100)}%</p>}
+                    <span className="sandbox-verdict-badge">{test.userVerdict === 'correct' ? '✓ Korrekt' : test.userVerdict === 'partial' ? '~ Teilweise' : test.userVerdict === 'incorrect' ? '✗ Falsch' : '○ Offen'}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {project.elements.some((el) => decisions[el.id]?.riskChecklist) && (
+          <section>
+            <h2>Risiko-Checkliste</h2>
+            <table className="report-table compact">
+              <thead>
+                <tr><th>Schritt</th><th>PII</th><th>Reversibel</th><th>Freigabe</th></tr>
+              </thead>
+              <tbody>
+                {project.elements.map((el) => {
+                  const rc = decisions[el.id]?.riskChecklist;
+                  if (!rc) return null;
+                  return (
+                    <tr key={el.id}>
+                      <td>{el.name}</td>
+                      <td>{rc.containsPII === 'yes' ? 'Ja' : rc.containsPII === 'no' ? 'Nein' : 'Unklar'}</td>
+                      <td>{rc.decisionReversible === 'yes' ? 'Ja' : 'Nein'}</td>
+                      <td>{rc.humanApprovalExists === 'yes' ? 'Ja' : 'Nein'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        {project.elements.some((el) => decisions[el.id]?.changeImpact) && (
+          <section>
+            <h2>Change Impact</h2>
+            <table className="report-table compact">
+              <thead>
+                <tr><th>Schritt</th><th>Betroffene Systeme</th><th>Change Mgmt</th></tr>
+              </thead>
+              <tbody>
+                {project.elements.map((el) => {
+                  const ci = decisions[el.id]?.changeImpact;
+                  if (!ci) return null;
+                  return (
+                    <tr key={el.id}>
+                      <td>{el.name}</td>
+                      <td>{ci.affectedSystems || '—'}</td>
+                      <td>{ci.changeManagementRequired === 'yes' ? 'Ja' : 'Nein'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
+        )}
+
         <section>
           <h2>Hinweis</h2>
           <p>Dieser Report dokumentiert menschliche Entscheidungen, unterstützt durch KI-Analyse. Er ersetzt keine rechtliche Beratung, kein DSGVO-Audit und kein AI-Impact-Assessment nach EU AI Act.</p>
@@ -168,6 +272,10 @@ export function ReportPreview({ project, decisions, onBack }: ReportPreviewProps
       </article>
     </main>
   );
+}
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0, style: 'currency', currency: 'EUR' }).format(value);
 }
 
 function buildOpenReasons(decision?: AssessmentDecision): string[] {

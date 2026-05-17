@@ -13,6 +13,7 @@ export interface AssessmentState {
 
 export type AssessmentAction =
   | { type: 'load_project'; project: AssessmentProject }
+  | { type: 'open_project'; project: AssessmentProject; decisions: Record<string, AssessmentDecision> }
   | { type: 'set_error'; error: string }
   | { type: 'select_element'; elementId: string }
   | { type: 'save_decision'; decision: AssessmentDecision }
@@ -41,6 +42,14 @@ export function assessmentReducer(state: AssessmentState, action: AssessmentActi
         view: 'analyzing',
         project: action.project,
         llmStatus: 'running',
+      };
+    case 'open_project':
+      return {
+        ...initialAssessmentState,
+        view: 'assessment',
+        project: action.project,
+        decisions: action.decisions,
+        llmStatus: 'done',
       };
     case 'set_error':
       return { ...state, error: action.error };

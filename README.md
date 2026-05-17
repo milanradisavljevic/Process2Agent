@@ -35,6 +35,9 @@ After analysis, steps are grouped into three categories: Quick Wins (high potent
 **ERP-Aware Suggestions**
 Built-in domain knowledge for NAV/Business Central processes (Purchase-to-Pay, Order-to-Cash, master data management). The keyword engine recognizes ERP-specific terminology and suggests appropriate integration patterns (OData API, Web Services, MCP).
 
+**5-Dimension Automation Analysis**
+Each step is evaluated on four dimensions — data structure (structured/semi-structured/unstructured), decision complexity (rule-based to creative), system access (API/RPA/none), and exception rate. From these, the app derives an automation level (0–3: None / Assistance / Partial / Full) with an architecture blueprint and expected STP rate. The LLM pre-fills all dimensions; the user adjusts in seconds.
+
 **Rule-Based Fallback**
 When no LLM is configured or the API call fails, the app falls back to a two-stage rule engine: BPMN element type mapping (Stage 1) and domain keyword matching (Stage 2). Every feature works offline.
 
