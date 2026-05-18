@@ -66,7 +66,7 @@ When no LLM is configured or the API call fails, the app falls back to a two-sta
 ## Quick Start
 
 ```bash
-git clone https://github.com/yourusername/process2agent.git
+git clone https://github.com/milanradisavljevic/process2agent.git
 cd process2agent
 npm install
 npm run dev
