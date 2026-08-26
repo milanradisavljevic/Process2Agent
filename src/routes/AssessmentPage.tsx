@@ -82,6 +82,15 @@ export function AssessmentPage() {
             onElementSelect={(elementId) => useAssessmentStore.getState().openDrawer(elementId)}
             onElementHover={setHoveredElementId}
           />
+          <div className="bpmn-legend">
+            <span className="legend-item"><span className="legend-dot legend-dot--quick-win" /> Quick Win</span>
+            <span className="legend-item"><span className="legend-dot legend-dot--potential" /> Potenzial</span>
+            <span className="legend-item"><span className="legend-dot legend-dot--human" /> Mensch im Loop</span>
+            <span className="legend-item"><span className="legend-dot legend-dot--open" /> Offen</span>
+            <span className="legend-sep" aria-hidden="true" />
+            <span className="legend-item"><span className="legend-dot legend-dot--completed" /> Bewertet</span>
+            <span className="legend-item"><span className="legend-dot legend-dot--risk" /> Klärungsbedarf</span>
+          </div>
         </div>
 
         <QuickWinsView
