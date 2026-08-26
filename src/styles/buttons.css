@@ -1,0 +1,51 @@
+/* =========================================
+   GLOBAL BUTTONS
+   ========================================= */
+
+.primary-button,
+.secondary-button,
+.report-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  border: none;
+  border-radius: var(--r-full);
+  font-weight: 700;
+  font-size: .9rem;
+  text-decoration: none;
+  transition: background .15s, box-shadow .15s, transform .1s;
+  white-space: nowrap;
+}
+
+.primary-button {
+  color: #fff;
+  background: var(--accent-primary);
+  box-shadow: 0 1px 0 rgba(255,255,255,.1) inset, var(--sh-2);
+}
+
+.primary-button:hover { background: #3d6be8; transform: translateY(-1px); }
+.primary-button input { display: none; }
+.primary-button.compact { min-height: 2.35rem; font-size: .85rem; }
+
+.secondary-button {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--sh-1);
+}
+
+.secondary-button:hover { background: var(--bg-overlay); }
+
+.report-button {
+  width: 100%;
+  margin-top: 1rem;
+  color: var(--text-inverse);
+  background: var(--color-quick-win);
+  font-weight: 800;
+  box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, var(--sh-1);
+}
+
+.report-button:hover { background: #2cb37e; }

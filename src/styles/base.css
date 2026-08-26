@@ -1,0 +1,84 @@
+/* =========================================
+   PROCESS2AGENT — Design System v2
+   Command Center Dark Theme
+   ========================================= */
+
+:root {
+  /* Basis-Hintergruende */
+  --bg-base:        #0f1117;
+  --bg-surface:     #171923;
+  --bg-elevated:    #1e2130;
+  --bg-overlay:     #252838;
+  --bg-canvas:      #0d0f14;
+
+  /* Raender und Trennlinien */
+  --border-subtle:  #2a2d3a;
+  --border-active:  #3d4155;
+
+  /* Text */
+  --text-primary:   #e8eaed;
+  --text-secondary: #9ca3b4;
+  --text-muted:     #5c6478;
+  --text-inverse:   #0f1117;
+
+  /* Akzentfarben */
+  --accent-primary:     #4e7cff;
+  --accent-primary-dim: #4e7cff22;
+
+  /* Semantische Farben */
+  --color-quick-win:    #34d399;
+  --color-potential:    #60a5fa;
+  --color-human:        #f59e0b;
+  --color-risk:         #ef4444;
+  --color-system:       #a78bfa;
+  --color-neutral:      #6b7280;
+
+  /* Tints */
+  --tint-quick-win:     #34d39912;
+  --tint-potential:     #60a5fa12;
+  --tint-human:         #f59e0b12;
+  --tint-risk:          #ef444412;
+  --tint-system:        #a78bfa12;
+
+  /* Pattern accent colors (für Karten) */
+  --p-human:    #60a5fa;
+  --p-auto:     #a78bfa;
+  --p-approval: #34d399;
+  --p-rule:     #38bdf8;
+  --p-api:      #f59e0b;
+  --p-code:     #f97316;
+  --p-notify:   #818cf8;
+  --p-classify: #f472b6;
+  --p-generate: #c084fc;
+  --p-unclear:  #ef4444;
+
+  /* Shadow scale */
+  --sh-1: 0 1px 3px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.18);
+  --sh-2: 0 4px 12px rgba(0,0,0,.30), 0 2px 4px rgba(0,0,0,.20);
+  --sh-3: 0 12px 28px rgba(0,0,0,.35), 0 4px 6px rgba(0,0,0,.22);
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+  --r-full: 9999px;
+
+  /* Fonts */
+  --font-body: 'DM Sans Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  color: var(--text-primary);
+  background: var(--bg-base);
+  font-family: var(--font-body);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg-base); color: var(--text-primary); }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+

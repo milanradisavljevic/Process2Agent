@@ -6,7 +6,7 @@
 
 ### Kernprinzipien
 
-1. **Client-Only:** Keine BPMN-Datei verlässt den Browser. Kein Upload, kein Backend. (LLM-Calls nur nach expliziter Nutzerkonfiguration.)
+1. **Client-Only:** Keine BPMN-Datei verlässt den Browser. Kein Upload, kein Backend, keine CDN-Runtime-Abhängigkeiten (Fonts/Worker sind gebündelt). LLM-Calls nur nach expliziter Nutzerkonfiguration.
 2. **LLM-Optional:** Die App funktioniert vollständig ohne LLM (regelbasiert). Provider: Anthropic API oder lokales Ollama.
 3. **Mensch entscheidet:** Das System schlägt vor, der Nutzer bestätigt. Jede Entscheidung wird dokumentiert.
 4. **Conservative Defaults:** Im Zweifel "Agent mit Freigabe", nicht "Agent autonom".
@@ -14,27 +14,31 @@
 
 ---
 
-## 2. Aktueller Projektstand
+## 2. Aktueller Projektstand (nach Phase 2)
 
 ### Architektur-Schichten
 
 | Schicht | Dateien | Zweck |
 |---|---|---|
-| App/Routing | `src/App.tsx` | View-Router (landing → import → assessment → report), Dialog-State, Autosave |
-| Komponenten | `src/components/*.tsx` | UI; Workspace-Landing, BPMN-Viewer, Interview-Drawer, Report |
-| Engine (pur) | `src/engine/*.ts` | Parsing, Enrichment, Automation-Level, LLM-Service, Summary — alle pure functions, getestet |
-| State | `src/state/*.reducer.ts` | Zwei Reducer: `workspaceReducer` (Workspace/Prozesse) + `assessmentReducer` (aktuelles Assessment) |
-| Persistenz | `src/storage/db.ts` | IndexedDB via `idb`; Workspace (Key `default`) + Processes mit Indizes |
-| Daten | `src/data/*.ts` | `mappingRules.ts` (BPMN→Pattern), `navPatterns.ts` (Keyword-Muster) |
-| Typen | `src/types/index.ts`, `src/types/workspace.ts` | Assessment-Typen / Workspace-Domäne |
+| Entry/Routing | `src/main.tsx`, `src/routes/AppRoutes.tsx` | HashRouter; Routen: `/` Landing · `/import` · `/process/:id` Assessment · `/process/:id/report`; Workspace-Load-Gate + `beforeunload`-Flush |
+| Pages | `src/routes/{Landing,Import,Assessment,Report}Page.tsx` | Dünne Seitenkompositionen; Dialog-State ist seitenlokal |
+| Komponenten | `src/components/*.tsx` | UI: WorkspaceLanding, BpmnViewer (Viewer), InterviewPanel (Drawer), ReportPreview, ResizableDrawer, Dialogs |
+| Engine (pur) | `src/engine/*.ts` | bpmnParser, domainEnrichment, llmService, automationLevel, **processSummary (einzige Aggregat-Quelle)**, documentExtractor (+ lazy pdf/docx Extraktoren) — pure functions, getestet |
+| Stores (Zustand) | `src/store/workspaceStore.ts`, `src/store/assessmentStore.ts`, `src/store/llmConfig.ts` | SSOT: Decisions leben AUSSCHLIESSLICH in `workspaceStore.processes[id].decisions`; assessmentStore hält nur UI-State (Index/Drawer/LLM-Status) |
+| Persistenz | `src/storage/db.ts` | IndexedDB via `idb`; Export-Format v2.0 (liest 1.x+2.x, normalisiert Statuswerte) |
+| Hooks | `src/hooks/useBpmnImport.ts` | Geteilter Import-/Demo-Flow für Landing + ImportPage |
+| Daten | `src/data/mappingRules.ts`, `navPatterns.ts` | BPMN→Pattern-Regeln, Keyword-Muster |
+| Styles | `src/styles/*.css` | Split nach Domäne (base/buttons/landing/assessment/drawer/dialogs/report/animations), Tokens in base.css |
 
 ### Wichtige Konzepte
 
-- **Workspace:** Bereiche (Areas) enthalten Prozesse. Jeder Prozess = `ProcessEntry` mit BPMN-XML, Steps, Suggestions, Decisions, Summary, optional BusinessCase + SandboxTests.
-- **Suggestion-Pipeline:** `bpmnParser` (DOMParser) → `domainEnrichment` (Mapping-Regeln + Keywords) → optional `llmService.analyzeBatch` (Anthropic/Ollama).
-- **Automation-Level:** 4 Dimensionen (`dataStructure`, `decisionComplexity`, `systemAccess`, `exceptionRate`) → Stufe 0–3 via `automationLevel.computeAutomationLevel`.
-- **Autosave:** Decisions werden mit 2s-Debounce in IndexedDB persistiert (`App.tsx`).
-- **LLM-Config:** Doppelt gespeichert (localStorage-Fallback + Workspace-Settings) — Konsolidierung geplant (Phase 2).
+- **Single Source of Truth:** Keine Decision-Kopien mehr. Mutationen laufen über `workspaceStore.updateProcess(id, updater)` → Summary + Status werden dort zentral neu abgeleitet.
+- **Autosave:** Debounce-Scheduler im workspaceStore (2s). Flush bei Routenwechsel (`flushPendingPersists`) und `beforeunload`. Kein useEffect-Timing mehr.
+- **Statusmigration:** Legacy-Statuswerte `implementing`/`live` → `validated` beim Laden/Import (`normalizeStatus`). Aktive Statuswerte: imported → analyzed → reviewed → validated.
+- **Change Impact:** Immer aktiv (ehemaliges `changeImpactEnabled`-Flag entfernt).
+- **Suggestion-Pipeline:** `bpmnParser` (DOMParser) → `domainEnrichment` (Regeln + Keywords) → optional `analyzeBatch` (Anthropic/Ollama), orchestriert von `assessmentStore.openProcess/startAnalysis`. Bei `provider==='none'` kein Fake-Analyzing-Screen.
+- **Resume-Verhalten:** Rückkehr vom Report zum selben Prozess erhält Index/Drawer/LLM-Ergebnis (keine erneute Batch-Analyse).
+- **Demo-Daten:** `demo_produktlaunch.bpmn` (4 Lanes, generische Tasks) und `demo_p2p_bestellung.bpmn` (spezialisierte Task-Typen + Gateway); beide per „Demo-Prozess laden"-Button importierbar und als Parser-Fixtures in Tests genutzt.
 
 ---
 
@@ -43,13 +47,14 @@
 | Komponente | Technologie |
 |---|---|
 | Framework | React 19 + TypeScript (strict) |
+| State | Zustand 5 |
+| Routing | react-router 8 (HashRouter — statisches Hosting ohne Rewrites) |
 | BPMN | bpmn-js NavigatedViewer (Modeler-Umbau geplant, Phase 3) |
-| State | React Context + `useReducer` (Zustand-Migration geplant, Phase 2) |
-| Persistenz | IndexedDB via `idb` |
-| Dokument-Extraktion | pdfjs-dist (Worker von CDN — Self-Hosting geplant), mammoth (DOCX) |
+| Persistenz | IndexedDB via idb |
+| Dokument-Extraktion | pdfjs-dist + mammoth — ausschließlich dynamisch importiert (eigene Chunks); pdf.worker self-hosted via `?url` |
+| Fonts | @fontsource-variable (DM Sans, JetBrains Mono) — kein Google-CDN |
 | Icons | lucide-react (KEINE Emojis im UI) |
-| Build/Test | Vite 6 + Vitest (jsdom) |
-| Report-Export | `window.print()` + `@media print` |
+| Build/Test | Vite 6 + Vitest (jsdom), manualChunks: vendor-react / vendor-bpmn |
 
 ---
 
@@ -64,43 +69,52 @@ npm run test:watch   # Vitest im Watch-Modus
 npx tsc --noEmit -p tsconfig.app.json   # TypeScript-Check ohne Build
 ```
 
-Vor jedem Commit: `npm test` + Typecheck müssen grün sein.
+Vor jedem Commit: `npm test` + Typecheck müssen grün sein. Store-Tests mocken `storage/db` via `vi.mock`.
 
 ---
 
 ## 5. Code-Style
 
-- **UI-Texte:** Deutsch (Zielmarkt DACH). Kein Sprach-Mix (z.B. nicht "Reviewed" neben "Analysiert").
+- **UI-Texte:** Deutsch (Zielmarkt DACH). Kein Sprach-Mix.
 - **Code:** Englisch (Variablen, Funktionen, Typen).
 - **TypeScript:** `strict: true`, kein `any`.
 - **Icons:** Ausschließlich lucide-react — keine Emojis in UI-Strings.
-- **Buttons:** Nur `primary-button` / `secondary-button` / `danger-button` Klassen verwenden.
+- **Buttons:** Nur `primary-button` / `secondary-button` / `danger-button`.
 - **Dialoge:** `ConfirmDialog`/`PromptDialog` aus `components/Dialogs.tsx` — niemals `window.prompt`/`window.confirm`.
-- **CSS:** Plain CSS in `src/styles.css`, Design-Tokens unter `:root`. Tote Klassen vermeiden.
+- **CSS:** Plain CSS in `src/styles/*`, Design-Tokens in base.css unter `:root`. Selektor nur in einer Datei definieren.
 - **Animationen:** Dezent (≤250ms); `prefers-reduced-motion` respektieren.
-- **Engine-Code:** Pure functions, keine React-Imports → jede neue Funktion bekommt einen Test.
+- **Engine-Code:** Pure functions, keine React-Imports → jede Funktion bekommt einen Test.
+- **Imports:** Statisch oben im File; keine dynamischen Imports außer für Lazy-Chunks (pdf/docx).
 
 ---
 
 ## 6. Wichtige Design-Entscheidungen
 
-- **Parser ohne bpmn-moddle:** Bewusst, DOMParser reicht für v2-Scope. (Graph-basierte Analyse kommt in Phase 3.)
-- **Print-CSS statt jsPDF:** Robust, kein zusätzliches Paket.
+- **Parser ohne bpmn-moddle** (noch): DOMParser reicht für aktuellen Scope. Graph-basierte Analyse + Voll-Editing via bpmn-js Modeler = Phase 3.
+- **Print-CSS statt jsPDF.**
 - **Conservative Defaults:** Generische Task → `agent_with_approval`, nie `agent_autonomous`.
-- **Lücken-Marker:** "Unklar"-Antworten erzeugen explizite Klärungsbedarf-Einträge im Report.
+- **Lücken-Marker:** "Unklar"-Antworten erzeugen Klärungsbedarf-Einträge im Report.
 - **Bekannte Engine-Quirks (dokumentiert in Tests, Fixes geplant):**
   - Keyword-Matching per Substring: "prüfen" matcht in "Rechnung prüfen" vor dem Invoice-Pattern (`domainEnrichment.test.ts`)
   - BPMN-ID kann als Fallback-"Extension-Name" durchrutschen (`bpmnParser.test.ts`)
-- **Statuswerte:** Aktuell 6 Status inkl. `implementing`/`live` — Reduktion auf 4 geplant (Positionierung: Denkmaterial, nicht Tracking).
+- **Report-Methodik-Anhang** wird aus den Mapping-Daten generiert — bleibt automatisch synchron zum Code.
 
 ---
 
-## 7. Referenzdokumente
+## 7. Roadmap (aktuell)
+
+1. **Phase 3 — UX/Design-Review & Redesign:** Systematische Review mit Playwright-Screenshots aller Views, Heuristiken gegen DESIGN_SPEC.md, Typo-/Spacing-Skala konsolidieren, States (empty/loading/error), A11y-Pass, danach Redesign-Umsetzung.
+2. **Phase 4 — Feature-Kern:** Portfolio-Dashboard (Cross-Prozess-Readiness), Export-Suite (Markdown/HTML/JSON), gestuftes Interview, Fragenkatalog-Generator.
+3. **Später:** BPMN Voll-Editing (Modeler + graphAnalyzer), Workshop-Modus, AI-Act-Anhang, EN-i18n, Deployment.
+
+---
+
+## 8. Referenzdokumente
 
 - **`process2agent_v1_spec.md`** — Historische Spezifikation (v1, teils überholt).
 - **`MAPPING_TABLE.md`** — Kanonische Mapping-Referenz (Deutsch).
 - **`docs/MAPPING_TABLE.md`** — Englische Übersetzung der Mapping-Tabelle.
-- **`ROADMAP.md`** — Historische Roadmap (wird vom aktuellen Umsetzungsplan abgelöst).
+- **`ROADMAP.md`** — Historisch (wird durch Abschnitt 7 hier abgelöst).
 - **`DESIGN_SPEC.md`** — Design-System ("Command Center" Dark Theme).
 
 ---

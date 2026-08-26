@@ -1,0 +1,249 @@
+/* =========================================
+   REPORT
+   ========================================= */
+
+.report-page {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background: var(--bg-base);
+}
+
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  max-width: 60rem;
+  margin: 0 auto 1.25rem;
+}
+
+.report-document {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 3.5rem;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-3);
+  color: #0f172a;
+}
+
+.report-document h1 {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -.05em;
+  color: #0f172a;
+  margin: .5rem 0 .25rem;
+}
+
+.report-document h2 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  color: #0f172a;
+  margin: 2.5rem 0 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.report-document h3 {
+  font-size: .97rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: #0f172a;
+  margin: 0 0 .5rem;
+}
+
+.executive-summary {
+  padding: 1.1rem 1.25rem;
+  color: #0f172a;
+  background: rgba(96, 165, 250, .08);
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--color-potential);
+  border-radius: var(--r-md);
+  line-height: 1.65;
+  font-size: .95rem;
+}
+
+.report-header {
+  margin-bottom: 2rem;
+}
+
+.report-header h1 {
+  margin: .4rem 0 .6rem;
+}
+
+.report-meta {
+  color: #64748b;
+  font-size: .9rem;
+  margin: 0;
+}
+
+.report-methodology {
+  break-before: page;
+}
+
+.report-methodology h3 {
+  margin-top: 1.5rem;
+}
+
+.report-document table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: .9rem;
+}
+
+.report-document th,
+.report-document td {
+  padding: .65rem .8rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.report-document th {
+  color: #64748b;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: #f8fafc;
+}
+
+.report-document td { color: #0f172a; }
+
+.clarification-list {
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.clarification-list li {
+  margin-bottom: .75rem;
+  font-size: .9rem;
+}
+
+.clarification-list strong {
+  display: block;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.clarification-list span {
+  display: block;
+  color: #dc2626;
+  font-size: .82rem;
+  margin-top: .15rem;
+}
+
+.report-step {
+  break-inside: avoid;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: .9rem;
+  line-height: 1.6;
+}
+
+.report-step p { margin: .2rem 0; color: #334155; }
+
+.clarification {
+  margin-top: .5rem !important;
+  padding: .4rem .7rem;
+  background: rgba(239, 68, 68, .06);
+  border-left: 3px solid var(--color-risk);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: .8rem;
+}
+
+.warning-text { color: #b45309; font-weight: 700; }
+
+/* =========================================
+   ERROR BOUNDARY
+   ========================================= */
+
+.fatal-error {
+  max-width: 42rem;
+  margin: 10vh auto;
+  padding: 2rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-2);
+  color: var(--text-primary);
+}
+
+/* =========================================
+   ANALYZING VIEW
+   ========================================= */
+
+.analyzing-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg-base);
+}
+
+.analyzing-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 4rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-3);
+  text-align: center;
+  max-width: 28rem;
+}
+
+.analyzing-card h2 {
+  color: var(--text-primary);
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.analyzing-card p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.analyzing-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================
+   PRINT
+   ========================================= */
+
+@media print {
+  :root, body { background: #fff; }
+  .no-print, .report-actions { display: none !important; }
+  .report-page { padding: 0; background: #fff; }
+  .report-document {
+    max-width: none;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: #fff;
+    color: #0f172a;
+  }
+  .report-document h1,
+  .report-document h2,
+  .report-document h3 { color: #0f172a; }
+  .report-document th,
+  .report-document td { color: #0f172a; border-color: #e2e8f0; }
+  .report-document th { background: #f8fafc; }
+}

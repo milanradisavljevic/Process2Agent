@@ -32,8 +32,6 @@ export type PrivacyLevel =
 
 export type ComplexityClass = 'low' | 'medium' | 'high' | 'unknown';
 
-export type AppView = 'import' | 'analyzing' | 'assessment' | 'report';
-
 export interface ProcessElement {
   id: string;
   name: string;

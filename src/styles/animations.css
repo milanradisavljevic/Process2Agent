@@ -1,0 +1,105 @@
+/* =========================================
+   PHASE 4 — UX POLISH / ANIMATIONS
+   ========================================= */
+
+/* 1. Drawer spring easing — bereits in .drawer-panel */
+
+/* 2. Cards entrance (dezent) */
+.process-card,
+.element-card {
+  animation: card-enter 250ms ease-out both;
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 3. Sandbox result reveal */
+.sandbox-result > * {
+  animation: reveal-up 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 4. Page transitions */
+.view-transition {
+  animation: view-enter 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes view-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 5. Area collapse (grid-template-rows trick) */
+.area-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.area-content.open {
+  grid-template-rows: 1fr;
+}
+
+.area-content-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* 6. Multi-step loading states */
+.analyzing-steps {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.analyzing-step {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .85rem;
+  color: var(--text-muted);
+  transition: color .3s;
+}
+
+.analyzing-step.done {
+  color: var(--color-quick-win);
+}
+
+.analyzing-step.active {
+  color: var(--text-primary);
+}
+
+.analyzing-step-dot {
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  background: var(--border-subtle);
+  flex-shrink: 0;
+  transition: background .3s;
+}
+
+.analyzing-step.done .analyzing-step-dot { background: var(--color-quick-win); }
+.analyzing-step.active .analyzing-step-dot { background: var(--accent-primary); animation: pulse-dot 1.2s infinite; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(1.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print optimization already exists in @media print */
