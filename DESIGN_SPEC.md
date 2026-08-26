@@ -76,6 +76,40 @@ Status-Badges und in der Legende. Nie im Fliesstext, nie in
 Ueberschriften, nie in Buttons (ausser Primary). Das haelt 
 die Oberflaeche ruhig.
 
+### Skalen und Buttons (aktualisiert 2026-08-26)
+
+```css
+:root {
+  /* Typografie-Skala (ersetzt ad-hoc Groessen) */
+  --text-xs: 0.72rem;    /* Labels, Eyebrows, Badges */
+  --text-sm: 0.85rem;    /* Sekundaertext, Metas, Buttons */
+  --text-md: 0.95rem;    /* Fliesstext */
+  --text-lg: 1.1rem;     /* Abschnittstitel */
+  --text-xl: 1.35rem;    /* Seiten-/Prozesstitel */
+  --text-2xl: 1.7rem;    /* Drawer-Titel */
+  --text-display: clamp(1.75rem, 3vw, 2.25rem); /* Landing-Claim */
+
+  /* Spacing-Skala */
+  --space-1: 0.25rem;  --space-2: 0.5rem;
+  --space-3: 0.75rem;  --space-4: 1rem;
+  --space-5: 1.25rem;  --space-6: 1.5rem;
+  --space-7: 2rem;     --space-8: 3rem;
+
+  --r-btn: 8px;  /* Buttons: bewusst NICHT Pill (9999px) */
+}
+```
+
+- Buttons: 8px-Radius, 36px/32px Hoehe, font-weight 600, keine
+  Glow-Shadows; Hover nur ueber background/border-color
+- Globaler Fokus-Ring: `:focus-visible { outline: 2px solid
+  var(--accent-primary); outline-offset: 2px; }`
+- Kontrast: `--text-muted` ist WCAG-AA-pflichtig (≥4.5:1 auf
+  --bg-surface) und darf nicht wieder abgedunkelt werden
+- Dark Canvas: bpmn-js-Defaults werden per CSS auf das Theme gemappt
+  (`src/styles/assessment.css`, Block "Dark Canvas"); die Legende
+  unter dem Diagramm erklaert die Farbkodierung
+- App-Header im Assessment: sticky mitBackdrop-Blur
+
 ---
 
 ## 2. Typografie
@@ -288,44 +322,23 @@ Drei Karten nebeneinander nach der Analyse:
 
 ## 4. Interaktionen und Animationen
 
-### Page Load / Post-Analyse
+**Grundsatz (aktualisiert 2026-08-26):** Dezent und zweckhaft. Keine Count-Ups,
+keine Stagger-Reveals, keine künstlichen Fortschrittsschritte — sie wirken
+"vibe-coded" und verlangsamen die Nutzung. Was bleibt:
 
-Nach der LLM-Analyse: Die Elemente im BPMN-Diagramm 
-werden nacheinander eingefaerbt (staggered, 50ms pro Element). 
-Die Score-Badges im Header zaehlen von 0 hoch (count-up, 800ms). 
-Die Karten im Grid erscheinen mit fade-in + translate-y (staggered).
+- Drawer-Slide-in (250ms cubic-bezier) und Overlay-Fade (200ms)
+- Card-Enter (250ms, ohne Verzögerungsstaffelung)
+- View-Wechsel (250ms Fade/Translate)
+- `prefers-reduced-motion` schaltet alles auf near-zero
+
+Der Analyse-Wartescreen zeigt nur echten Kontext („KI-Analyse läuft…", Anzahl
+Schritte) — keine erfundenen Einzelschritte. Beim `provider: none` entfällt
+der Screen vollständig.
 
 ```css
 @keyframes card-enter {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
-}
-
-.element-card {
-  animation: card-enter 350ms ease-out both;
-  animation-delay: calc(var(--card-index) * 40ms);
-}
-```
-
-### Drawer
-
-```css
-.drawer-overlay {
-  background: rgba(0, 0, 0, 0);
-  transition: background 200ms ease;
-}
-
-.drawer-overlay.open {
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.drawer-panel {
-  transform: translateX(100%);
-  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.drawer-panel.open {
-  transform: translateX(0);
 }
 ```
 

@@ -1,5 +1,10 @@
 # UX-Review — Findings (Stand: Phase 3 Baseline, 2026-08-26)
 
+> **Status: ABGEARBEITET (2026-08-26).** Alle P1- und P2-Findings wurden in
+> Phase 3 umgesetzt — Commits `2afe0c9` (WP0) … `8ccaa82` (WP6). Vorher/Nachher:
+> `docs/reviews/before/` vs. `docs/reviews/after/`. P3-Reste: F3 (Lane-Liste
+> kürzen), D5 (bpmn.io-Wasserzeichen bleibt aus Lizenzgründen), A6 (Farbrollen).
+
 Basis: Screenshots in `docs/reviews/before/` (6 Zustände × 2 Viewports) + Code-Audit.
 Jedes Finding hat eine Priorität (P1 = blocker für "wirkt professionell", P2 = klarer Gewinn, P3 = Nice-to-have) und ein Ziel-WP.
 

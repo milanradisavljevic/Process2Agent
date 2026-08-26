@@ -103,9 +103,10 @@ Vor jedem Commit: `npm test` + Typecheck müssen grün sein. Store-Tests mocken 
 
 ## 7. Roadmap (aktuell)
 
-1. **Phase 3 — UX/Design-Review & Redesign:** Systematische Review mit Playwright-Screenshots aller Views, Heuristiken gegen DESIGN_SPEC.md, Typo-/Spacing-Skala konsolidieren, States (empty/loading/error), A11y-Pass, danach Redesign-Umsetzung.
-2. **Phase 4 — Feature-Kern:** Portfolio-Dashboard (Cross-Prozess-Readiness), Export-Suite (Markdown/HTML/JSON), gestuftes Interview, Fragenkatalog-Generator.
-3. **Später:** BPMN Voll-Editing (Modeler + graphAnalyzer), Workshop-Modus, AI-Act-Anhang, EN-i18n, Deployment.
+1. **Phase 3 — UX/Design-Review & Redesign: ✅ erledigt (2026-08-26).** Findings-Katalog: `docs/reviews/FINDINGS.md`, Vorher/Nachher-Screenshots: `docs/reviews/{before,after}/`. Ergebnis: Token-Skalen (Typo/Spacing), Button-System (8px), Dark BPMN-Canvas + Legende, Sticky-Header, A11y (Kontrast/Fokus/ESC), ehrliche Analyzing-States, Landing/Import-Refresh. Screenshot-Tooling: `npx playwright test` (e2e/screenshots.spec.ts, `SHOT_TARGET=<dir>`).
+2. **Multi-Provider-LLM (nächster Schritt):** OpenAI, DeepSeek, Qwen, Kimi, Mistral — alle OpenAI-kompatibel → generischer `callOpenAICompatible` + Preset-Tabelle (`data/providerPresets.ts`), `LLMConfig` verschlankt zu `{provider, model, apiKey, ollamaUrl}` inkl. Settings-Migration, Provider-Dropdown im LLMConfigPanel, Option „Benutzerdefiniert (OpenAI-kompatibel)" mit freier Base-URL. Voranalyse vorhanden (Session 2026-08-26).
+3. **Phase 4 — Feature-Kern:** Portfolio-Dashboard (Cross-Prozess-Readiness), Export-Suite (Markdown/HTML/JSON), gestuftes Interview, Fragenkatalog-Generator.
+4. **Später:** BPMN Voll-Editing (Modeler + graphAnalyzer), Workshop-Modus, AI-Act-Anhang, EN-i18n, Deployment.
 
 ---
 
