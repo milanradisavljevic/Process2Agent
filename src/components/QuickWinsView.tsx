@@ -50,7 +50,7 @@ export function QuickWinsView({
     <div className="quick-wins-view">
       <div className="element-grid-section">
         <div className="element-grid">
-          {elements.map((el, index) => {
+          {elements.map((el) => {
             const suggestion = suggestions[el.id];
             const decision = decisions[el.id];
             const category = getCategory(el, suggestion, decision);
@@ -60,7 +60,6 @@ export function QuickWinsView({
                 key={el.id}
                 type="button"
                 className={`element-card ${category} ${hoveredElementId === el.id ? 'hovered' : ''}`}
-                style={{ animationDelay: `${index * 40}ms` }}
                 onClick={() => onElementSelect(el.id)}
                 onMouseEnter={() => onElementHover?.(el.id)}
                 onMouseLeave={() => onElementHover?.(null)}
@@ -87,10 +86,10 @@ export function QuickWinsView({
                 {decision && (
                   <div className="element-card-status">
                     {decision.status === 'completed'
-                      ? '✓ Bewertet'
+                      ? 'Bewertet'
                       : decision.status === 'skipped'
-                        ? '→ Übersprungen'
-                        : '⚠ Klärungsbedarf'}
+                        ? 'Übersprungen'
+                        : 'Klärungsbedarf'}
                   </div>
                 )}
               </button>
@@ -107,7 +106,7 @@ export function QuickWinsView({
       />
 
       <div className="quick-wins-footer">
-        <button type="button" className="btn-primary" onClick={onReport}>
+        <button type="button" className="primary-button" onClick={onReport}>
           <FileText size={16} />
           Report generieren
         </button>

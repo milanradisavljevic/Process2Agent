@@ -1,4 +1,5 @@
-import { COMPLEXITY_LABELS, PATTERN_LABELS, PRIVACY_LABELS } from '../data/mappingRules';
+import { COMPLEXITY_LABELS, MAPPING_RULES, PATTERN_LABELS, PRIVACY_LABELS, VERDICT_LABELS } from '../data/mappingRules';
+import { getAutomationLevelLabel, estimateSTPRate } from '../engine/automationLevel';
 import { summarizeAssessment } from '../engine/reportGenerator';
 import type { AssessmentDecision, AssessmentProject } from '../types';
 import type { ProcessEntry } from '../types/workspace';
@@ -62,6 +63,10 @@ export function ReportPreview({ project, decisions, process, onBack }: ReportPre
   const clarificationItems = project.elements.filter((element) => decisions[element.id]?.status !== 'completed');
   const aiPercent = summary.total > 0 ? Math.round((summary.aiSuitable / summary.total) * 100) : 0;
   const quickWins = project.elements.filter((el) => project.suggestions[el.id]?.quick_win).slice(0, 3);
+  const laneNames = Array.from(new Set(project.elements.map((el) => el.laneName).filter(Boolean)));
+  const usedPatterns = Array.from(new Set(
+    project.elements.map((el) => decisions[el.id]?.pattern ?? project.suggestions[el.id]?.pattern).filter(Boolean),
+  ));
 
   return (
     <main className="report-page">
@@ -71,10 +76,13 @@ export function ReportPreview({ project, decisions, process, onBack }: ReportPre
       </div>
 
       <article className="report-document">
-        <header>
-          <p className="eyebrow">AI-Readiness Assessment</p>
+        <header className="report-header">
+          <p className="eyebrow">process2agent · AI-Readiness Assessment</p>
           <h1>{project.fileName}</h1>
-          <p>Erstellt am {createdAt} mit process2agent.</p>
+          <p className="report-meta">
+            Erstellt am {createdAt} · {summary.total} Schritte{laneNames.length > 0 ? ` · ${laneNames.length} Lanes (${laneNames.join(', ')})` : ''}
+            {process ? ` · Status: ${STATUS_LABELS_DE[process.status]}` : ''}
+          </p>
         </header>
 
         <section>
@@ -208,7 +216,7 @@ export function ReportPreview({ project, decisions, process, onBack }: ReportPre
                     <p><strong>{el?.name ?? 'Unbekannter Schritt'}</strong> · {test.inputFileName} · {test.inputType.toUpperCase()}</p>
                     {result?.summary && <p>{result.summary}</p>}
                     {typeof result?.confidence === 'number' && <p>Confidence: {Math.round(result.confidence * 100)}%</p>}
-                    <span className="sandbox-verdict-badge">{test.userVerdict === 'correct' ? '✓ Korrekt' : test.userVerdict === 'partial' ? '~ Teilweise' : test.userVerdict === 'incorrect' ? '✗ Falsch' : '○ Offen'}</span>
+                    <span className="sandbox-verdict-badge">{VERDICT_LABELS[test.userVerdict]}</span>
                   </div>
                 );
               })}
@@ -265,6 +273,63 @@ export function ReportPreview({ project, decisions, process, onBack }: ReportPre
           </section>
         )}
 
+        <section className="report-methodology">
+          <h2>Anhang: Methodik</h2>
+          <p>
+            Die Einordnung jedes Schritts folgt einer zweistufigen Methodik: Zunächst eine regelbasierte Zuordnung
+            aus dem BPMN-Elementtyp, verfeinert durch Domänen-Muster und — wo konfiguriert — eine KI-Analyse.
+            Jede Zuordnung ist ein Vorschlag; die finale Entscheidung trifft immer der Mensch und wird in diesem
+            Report dokumentiert.
+          </p>
+
+          <h3>Verwendete Automatisierungsmuster</h3>
+          <table className="report-table compact">
+            <thead>
+              <tr><th>Muster</th><th>Schritte in diesem Prozess</th></tr>
+            </thead>
+            <tbody>
+              {usedPatterns.map((pattern) => (
+                <tr key={pattern}>
+                  <td>{PATTERN_LABELS[pattern]}</td>
+                  <td>{project.elements.filter((el) => (decisions[el.id]?.pattern ?? project.suggestions[el.id]?.pattern) === pattern).length}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <h3>BPMN-Typ → Standardzuordnung</h3>
+          <table className="report-table compact">
+            <thead>
+              <tr><th>BPMN-Typ</th><th>Standardmuster</th><th>Interview erforderlich</th></tr>
+            </thead>
+            <tbody>
+              {MAPPING_RULES.map((rule) => (
+                <tr key={rule.bpmnType}>
+                  <td>{rule.bpmnType.replace('bpmn:', '')}</td>
+                  <td>{PATTERN_LABELS[rule.defaultPattern]}</td>
+                  <td>{rule.interviewRequired ? 'Ja' : 'Nein'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <h3>Automatisierungsstufen</h3>
+          <table className="report-table compact">
+            <thead>
+              <tr><th>Stufe</th><th>Bezeichnung</th><th>Typische STP-Rate</th></tr>
+            </thead>
+            <tbody>
+              {([0, 1, 2, 3] as const).map((level) => (
+                <tr key={level}>
+                  <td>{level}</td>
+                  <td>{getAutomationLevelLabel(level)}</td>
+                  <td>{estimateSTPRate(level)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
         <section>
           <h2>Hinweis</h2>
           <p>Dieser Report dokumentiert menschliche Entscheidungen, unterstützt durch KI-Analyse. Er ersetzt keine rechtliche Beratung, kein DSGVO-Audit und kein AI-Impact-Assessment nach EU AI Act.</p>
@@ -273,6 +338,15 @@ export function ReportPreview({ project, decisions, process, onBack }: ReportPre
     </main>
   );
 }
+
+const STATUS_LABELS_DE: Record<ProcessEntry['status'], string> = {
+  imported: 'Importiert',
+  analyzed: 'Analysiert',
+  reviewed: 'Bewertet',
+  validated: 'Validiert',
+  implementing: 'In Umsetzung',
+  live: 'Live',
+};
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0, style: 'currency', currency: 'EUR' }).format(value);

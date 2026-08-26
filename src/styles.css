@@ -190,8 +190,6 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   letter-spacing: .02em;
 }
 
-.privacy-note { display: none; }
-
 /* =========================================
    WORKSPACE
    ========================================= */
@@ -451,8 +449,14 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 }
 
 .workspace-empty-icon {
-  font-size: 3rem;
-  line-height: 1;
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  border-radius: var(--r-lg);
+  background: rgba(78,124,255,.08);
+  border: 1px solid rgba(78,124,255,.2);
+  color: var(--accent-primary);
 }
 
 .workspace-empty h2 {
@@ -913,6 +917,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  margin: 1rem 0;
 }
 
 .donut-center {
@@ -1493,6 +1498,28 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   font-size: .95rem;
 }
 
+.report-header {
+  margin-bottom: 2rem;
+}
+
+.report-header h1 {
+  margin: .4rem 0 .6rem;
+}
+
+.report-meta {
+  color: #64748b;
+  font-size: .9rem;
+  margin: 0;
+}
+
+.report-methodology {
+  break-before: page;
+}
+
+.report-methodology h3 {
+  margin-top: 1.5rem;
+}
+
 .report-document table {
   width: 100%;
   border-collapse: collapse;
@@ -1688,6 +1715,53 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   border-top: 1px solid var(--border-subtle);
 }
 
+.dialog-panel { width: min(420px, 96vw); }
+
+.dialog-body {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.dialog-body h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.dialog-body p {
+  margin: 0;
+  font-size: .88rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.dialog-danger-icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--r-md);
+  background: rgba(239,68,68,.12);
+  border: 1px solid rgba(239,68,68,.3);
+  color: #fca5a5;
+}
+
+.danger-button {
+  min-height: 2.35rem;
+  padding: 0 1.1rem;
+  border: none;
+  border-radius: var(--r-full);
+  font-weight: 700;
+  font-size: .85rem;
+  color: #fff;
+  background: #dc2626;
+  box-shadow: 0 8px 20px rgba(220,38,38,.3);
+}
+
+.danger-button:hover { background: #b91c1c; }
+
 .config-fieldset {
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-sm);
@@ -1814,37 +1888,6 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   padding-top: .5rem;
 }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: .4rem;
-  padding: .6rem 1.2rem;
-  background: var(--accent-primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--r-full);
-  font-weight: 700;
-  font-size: .9rem;
-  cursor: pointer;
-  transition: background .15s, transform .1s;
-}
-
-.btn-primary:hover { background: #3d6be8; transform: translateY(-1px); }
-
-.qw-card-rationale {
-  font-size: .75rem;
-  color: var(--text-muted);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.qw-card-decision-status {
-  font-size: .7rem;
-  margin-top: .25rem;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
 /* =========================================
    REPORT ENHANCEMENTS
    ========================================= */
@@ -1860,33 +1903,6 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 
 .report-document .eyebrow {
   color: var(--accent-primary);
-}
-
-.donut-wrap {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin: 1rem 0 1.5rem;
-}
-
-.donut-legend {
-  display: flex;
-  flex-direction: column;
-  gap: .4rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: .4rem;
-  font-size: .85rem;
-}
-
-.legend-dot {
-  width: .7rem;
-  height: .7rem;
-  border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .report-quick-win-cards {
@@ -2217,27 +2233,20 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 
 /* 1. Drawer spring easing — bereits in .drawer-panel */
 
-/* 2. Cards staggered entrance */
-.process-card {
-  animation: card-enter 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: calc(var(--card-index, 0) * 60ms);
+/* 2. Cards entrance (dezent) */
+.process-card,
+.element-card {
+  animation: card-enter 250ms ease-out both;
 }
 
 @keyframes card-enter {
-  from { opacity: 0; transform: translateY(16px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* 3. Score count-up — bereits in ScoreBar.tsx via useCountUp */
-
-/* 4. BPMN color reveal wave — handled in BpmnViewer.tsx */
-
-/* 5. Hover sync handled via JS events */
-
-/* 6. Sandbox result reveal */
+/* 3. Sandbox result reveal */
 .sandbox-result > * {
   animation: reveal-up 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: calc(var(--reveal-index, 0) * 80ms);
 }
 
 @keyframes reveal-up {
@@ -2245,21 +2254,21 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* 7. Page transitions */
+/* 4. Page transitions */
 .view-transition {
-  animation: view-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: view-enter 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes view-enter {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* 8. Area collapse (grid-template-rows trick) */
+/* 5. Area collapse (grid-template-rows trick) */
 .area-content {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: grid-template-rows 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .area-content.open {
@@ -2271,7 +2280,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   min-height: 0;
 }
 
-/* 9. Multi-step loading states */
+/* 6. Multi-step loading states */
 .analyzing-steps {
   display: flex;
   flex-direction: column;
@@ -2314,9 +2323,12 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   50% { opacity: .5; transform: scale(1.3); }
 }
 
-/* Element grid stagger */
-.element-card {
-  animation-delay: calc(var(--card-index, 0) * 40ms);
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Print optimization already exists in @media print */

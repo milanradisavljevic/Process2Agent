@@ -7,19 +7,18 @@ interface ProcessCardProps {
   onOpen: (processId: string) => void;
   onDelete: (processId: string) => void;
   onStatusChange: (processId: string, status: ProcessStatus) => void;
-  style?: React.CSSProperties;
 }
 
 const STATUS_LABELS: Record<ProcessStatus, string> = {
   imported: 'Importiert',
   analyzed: 'Analysiert',
-  reviewed: 'Reviewed',
+  reviewed: 'Bewertet',
   validated: 'Validiert',
   implementing: 'In Umsetzung',
   live: 'Live',
 };
 
-export function ProcessCard({ process, onOpen, onDelete, onStatusChange, style }: ProcessCardProps) {
+export function ProcessCard({ process, onOpen, onDelete, onStatusChange }: ProcessCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const updatedAt = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(new Date(process.updatedAt));
@@ -37,7 +36,7 @@ export function ProcessCard({ process, onOpen, onDelete, onStatusChange, style }
   }, [menuOpen]);
 
   return (
-    <article className={`process-card status-${process.status}`} style={style}>
+    <article className={`process-card status-${process.status}`}>
       <button type="button" className="process-card-main" onClick={() => onOpen(process.id)}>
         <span className={`status-badge status-badge--${process.status}`}>{STATUS_LABELS[process.status]}</span>
         <h3>{process.name}</h3>

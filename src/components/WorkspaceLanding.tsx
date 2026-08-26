@@ -1,12 +1,16 @@
-import { Plus, Settings } from 'lucide-react';
+import { Inbox, Plus } from 'lucide-react';
+import type { LLMConfig } from '../types';
 import type { Area, ProcessEntry, ProcessStatus, Workspace } from '../types/workspace';
 import { AreaSection } from './AreaSection';
 import { ExportImport } from './ExportImport';
+import { LLMConfigPanel } from './LLMConfigPanel';
 
 interface WorkspaceLandingProps {
   workspace: Workspace;
   processes: ProcessEntry[];
   error?: string | null;
+  llmConfig: LLMConfig;
+  onLLMConfigChange: (config: LLMConfig) => void;
   onImport: (areaId?: string) => void;
   onCreateArea: () => void;
   onRenameArea: (area: Area) => void;
@@ -22,6 +26,8 @@ export function WorkspaceLanding({
   workspace,
   processes,
   error,
+  llmConfig,
+  onLLMConfigChange,
   onImport,
   onCreateArea,
   onRenameArea,
@@ -46,9 +52,9 @@ export function WorkspaceLanding({
         </div>
         <div className="header-actions">
           <ExportImport onExport={onExport} onImport={onImportWorkspace} />
-          <button type="button" className="primary-button compact" onClick={() => onImport()}><Plus size={15} /> BPMN importieren</button>
+          <LLMConfigPanel config={llmConfig} onConfigChange={onLLMConfigChange} />
           <button type="button" className="secondary-button" onClick={onCreateArea}><Plus size={15} /> Bereich</button>
-          <button type="button" className="llm-config-btn" title="Settings"><Settings size={16} /></button>
+          <button type="button" className="primary-button compact" onClick={() => onImport()}><Plus size={15} /> BPMN importieren</button>
         </div>
       </header>
       {error ? <p className="error-text workspace-error">{error}</p> : null}
@@ -72,7 +78,7 @@ export function WorkspaceLanding({
       </div>
       {processes.length === 0 && (
         <div className="workspace-empty">
-          <div className="workspace-empty-icon">📋</div>
+          <div className="workspace-empty-icon"><Inbox size={44} strokeWidth={1.4} /></div>
           <h2>Keine Prozesse im Workspace</h2>
           <p>Importieren Sie Ihr erstes BPMN-Modell, um die AI-Readiness-Bewertung zu starten.</p>
           <button type="button" className="primary-button" onClick={() => onImport()}>

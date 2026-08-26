@@ -1,7 +1,11 @@
 # process2agent — Mapping-Tabelle
 
 > Eigenstaendiges Referenzdokument. Unabhaengig von der App nutzbar.
-> Version: 1.0 · Stand: 2026-05-14 · Autor: Milan Radisavljevic
+> Version: 1.0 · Stand: 2026-08-26 · Autor: Milan Radisavljevic
+>
+> **Kanonische Version (Deutsch).** Englische Übersetzung: `docs/MAPPING_TABLE.md`.
+> Bei Aenderungen an den Pattern-Definitionen (`src/data/mappingRules.ts`, `src/data/navPatterns.ts`)
+> beide Dokumente synchron halten.
 
 Diese Tabelle bildet BPMN-Elementtypen und Prozessschrittmuster auf KI-Agenten-Muster ab. Sie ist das intellektuelle Zentrum der App und kann eigenstaendig als Beratungsgrundlage verwendet werden.
 

@@ -1,5 +1,8 @@
 # BPMN-to-Agent Mapping Table
 
+> English translation of the canonical German reference: [`MAPPING_TABLE.md`](../MAPPING_TABLE.md).
+> Keep both documents in sync when changing pattern definitions (`src/data/mappingRules.ts`, `src/data/navPatterns.ts`).
+
 A systematic mapping from BPMN 2.0 element types to agentic workflow patterns for AI-readiness assessment.
 
 This table is the core methodology of process2agent. It can be used independently of the app as a reference for AI consultants, process managers, and enterprise architects evaluating where AI agents add value in documented business processes.

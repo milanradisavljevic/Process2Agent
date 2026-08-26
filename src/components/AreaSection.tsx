@@ -74,14 +74,13 @@ export function AreaSection({
       <div className={`area-content ${expanded ? 'open' : ''}`}>
         <div className="area-content-inner">
           <div className="process-grid">
-            {processes.map((process, index) => (
+            {processes.map((process) => (
               <ProcessCard
                 key={process.id}
                 process={process}
                 onOpen={onOpenProcess}
                 onDelete={onDeleteProcess}
                 onStatusChange={onStatusChange}
-                style={{ '--card-index': index } as React.CSSProperties}
               />
             ))}
             {processes.length === 0 ? <p className="empty-area">Noch keine Prozesse in diesem Bereich.</p> : null}

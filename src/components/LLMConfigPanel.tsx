@@ -129,10 +129,10 @@ export function LLMConfigPanel({ config, onConfigChange }: LLMConfigPanelProps) 
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
+              <button type="button" className="secondary-button" onClick={() => setOpen(false)}>
                 Abbrechen
               </button>
-              <button type="button" className="btn-primary" onClick={handleSave}>
+              <button type="button" className="primary-button compact" onClick={handleSave}>
                 Speichern
               </button>
             </div>

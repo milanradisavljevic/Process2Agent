@@ -101,36 +101,30 @@ export function BpmnViewer({
       }
     });
 
-    // Reveal wave: stagger marker application by element index
-    const timers: number[] = [];
-    elements.forEach((element, index) => {
-      timers.push(window.setTimeout(() => {
-        try {
-          const decision = decisions[element.id];
-          const suggestion = suggestions[element.id];
+    elements.forEach((element) => {
+      try {
+        const decision = decisions[element.id];
+        const suggestion = suggestions[element.id];
 
-          if (element.id === currentElementId) {
-            canvas.addMarker(element.id, 'current-step');
-          } else if (element.id === hoveredElementId) {
-            canvas.addMarker(element.id, 'hover-step');
-          } else if (decision?.status === 'completed') {
-            canvas.addMarker(element.id, 'completed-step');
-          } else if (decision?.status === 'needs_clarification' || decision?.status === 'skipped') {
-            canvas.addMarker(element.id, 'clarification-step');
-          } else if (suggestion?.quick_win) {
-            canvas.addMarker(element.id, 'quick-win-marker');
-          } else if (suggestion && AUTOMATION_PATTERNS.has(suggestion.pattern)) {
-            canvas.addMarker(element.id, 'potential-marker');
-          } else if (suggestion) {
-            canvas.addMarker(element.id, 'human-marker');
-          }
-        } catch (error) {
-          console.warn(`BPMN-Marker für ${element.id} konnte nicht gesetzt werden.`, error);
+        if (element.id === currentElementId) {
+          canvas.addMarker(element.id, 'current-step');
+        } else if (element.id === hoveredElementId) {
+          canvas.addMarker(element.id, 'hover-step');
+        } else if (decision?.status === 'completed') {
+          canvas.addMarker(element.id, 'completed-step');
+        } else if (decision?.status === 'needs_clarification' || decision?.status === 'skipped') {
+          canvas.addMarker(element.id, 'clarification-step');
+        } else if (suggestion?.quick_win) {
+          canvas.addMarker(element.id, 'quick-win-marker');
+        } else if (suggestion && AUTOMATION_PATTERNS.has(suggestion.pattern)) {
+          canvas.addMarker(element.id, 'potential-marker');
+        } else if (suggestion) {
+          canvas.addMarker(element.id, 'human-marker');
         }
-      }, index * 80));
+      } catch (error) {
+        console.warn(`BPMN-Marker für ${element.id} konnte nicht gesetzt werden.`, error);
+      }
     });
-
-    return () => timers.forEach(clearTimeout);
   }, [currentElementId, hoveredElementId, decisions, elements, isReady, suggestions]);
 
   return (

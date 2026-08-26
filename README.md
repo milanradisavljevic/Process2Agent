@@ -4,7 +4,7 @@
 
 Import a BPMN process model. Get an instant, LLM-powered analysis of which steps are ready for AI automation, which need human oversight, and where data privacy requires local processing.
 
-![process2agent assessment view](docs/screenshots/assessment-view.png)
+![process2agent assessment view](docs/screenshots/bpmn-colored.png)
 
 ---
 

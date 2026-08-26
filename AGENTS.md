@@ -2,59 +2,39 @@
 
 ## 1. Projektuebersicht
 
-**process2agent** ist eine clientseitige Web-App zur AI-Readiness-Bewertung von Geschaeftsprozessen. Sie importiert BPMN-Prozessmodelle und fuehrt den Nutzer durch ein gefuehrtes Interview pro Prozessschritt. Das Ergebnis ist ein druckbarer AI-Readiness-Report.
+**process2agent** ist eine clientseitige Web-App zur AI-Readiness-Bewertung von Geschäftsprozessen. Sie importiert BPMN-Prozessmodelle, führt durch ein geführtes Interview pro Prozessschritt und erzeugt druckbare AI-Readiness-Reports für Beratungssituationen.
 
 ### Kernprinzipien
 
-1. **Client-Only:** Keine BPMN-Datei verlaesst den Browser. Kein Upload, kein Backend, kein Server-Log.
-2. **LLM-Optional:** Die App funktioniert vollstaendig ohne LLM (rein regelbasiert). Ollama/Cloud-API ist v2-Scope.
-3. **Mensch entscheidet:** Das System schlaegt vor, der Nutzer bestaetigt. Jede Entscheidung wird dokumentiert.
+1. **Client-Only:** Keine BPMN-Datei verlässt den Browser. Kein Upload, kein Backend. (LLM-Calls nur nach expliziter Nutzerkonfiguration.)
+2. **LLM-Optional:** Die App funktioniert vollständig ohne LLM (regelbasiert). Provider: Anthropic API oder lokales Ollama.
+3. **Mensch entscheidet:** Das System schlägt vor, der Nutzer bestätigt. Jede Entscheidung wird dokumentiert.
 4. **Conservative Defaults:** Im Zweifel "Agent mit Freigabe", nicht "Agent autonom".
-
-### Zielgruppe (v1)
-
-Primaer: AI-Consultants und Prozessberater — als Live-Beratungswerkzeug in Kundengespraechen.
-Sekundaer: Milan selbst — als Portfolio-Stueck, Gespraechsoeffner bei Bewerbungen.
+5. **Zielpositionierung:** Reports & Denkmaterial für AI-Consultants — bewusst KEINE Umsetzungsverfolgung/SAP-Integration.
 
 ---
 
-## 2. Aktueller Projektstand (Stand: 2026-05-14)
+## 2. Aktueller Projektstand
 
-### Was existiert
+### Architektur-Schichten
 
-| Datei/Verzeichnis | Zweck |
-|---|---|
-| `src/App.tsx` | Root-Komponente, View-Router (import → assessment → report) |
-| `src/components/BpmnViewer.tsx` | bpmn-js Wrapper; Instanz in `useRef`, kein Re-Render-Loop |
-| `src/components/FileDropZone.tsx` | BPMN-Import per Drag-and-Drop oder Klick |
-| `src/components/InterviewPanel.tsx` | Gefuehrtes Interview pro Prozessschritt (Pattern, Datenschutz, Komplexitaet) |
-| `src/components/ReportPreview.tsx` | Druckbarer AI-Readiness-Report |
-| `src/components/ScoreBar.tsx` | Echtzeit-Uebersicht der Bewertungsfortschritts |
-| `src/components/ErrorBoundary.tsx` | React Error Boundary fuer unerwartete Laufzeitfehler |
-| `src/engine/bpmnParser.ts` | BPMN-XML parsen via Browser `DOMParser` — kein bpmn-moddle |
-| `src/engine/domainEnrichment.ts` | Keyword-Matching gegen `navPatterns.ts` |
-| `src/engine/reportGenerator.ts` | Markdown-Report und `AssessmentSummary` erzeugen |
-| `src/data/mappingRules.ts` | BPMN-Typ → Pattern-Zuordnung, Labels, Hints |
-| `src/data/navPatterns.ts` | P2P-Domain-Patterns mit Keywords |
-| `src/state/assessmentReducer.ts` | React `useReducer` fuer den Bewertungszustand |
-| `src/types/index.ts` | Alle TypeScript-Interfaces und Union-Types |
-| `src/styles.css` | Plain CSS (kein Tailwind) |
-| `README.md` | Projektbeschreibung, Tech-Stack, Architektur-Diagramm |
-| `MAPPING_TABLE.md` | Standalone-Mapping-Referenz fuer Vortraege und Artikel |
-| `LICENSE` | MIT |
-| `.gitignore` | node_modules, dist, Zone.Identifier |
-| `process2agent_v1_spec.md` | Vollstaendige Spezifikation (892 Zeilen) |
-| `subprozess_launchvorbereitung.bpmn` | Beispiel-BPMN-Datei zum Testen |
+| Schicht | Dateien | Zweck |
+|---|---|---|
+| App/Routing | `src/App.tsx` | View-Router (landing → import → assessment → report), Dialog-State, Autosave |
+| Komponenten | `src/components/*.tsx` | UI; Workspace-Landing, BPMN-Viewer, Interview-Drawer, Report |
+| Engine (pur) | `src/engine/*.ts` | Parsing, Enrichment, Automation-Level, LLM-Service, Summary — alle pure functions, getestet |
+| State | `src/state/*.reducer.ts` | Zwei Reducer: `workspaceReducer` (Workspace/Prozesse) + `assessmentReducer` (aktuelles Assessment) |
+| Persistenz | `src/storage/db.ts` | IndexedDB via `idb`; Workspace (Key `default`) + Processes mit Indizes |
+| Daten | `src/data/*.ts` | `mappingRules.ts` (BPMN→Pattern), `navPatterns.ts` (Keyword-Muster) |
+| Typen | `src/types/index.ts`, `src/types/workspace.ts` | Assessment-Typen / Workspace-Domäne |
 
-### Was noch aussteht (v2+)
+### Wichtige Konzepte
 
-| Feature | Begruendung fuer v2 |
-|---|---|
-| LLM-Vorschlaege (Ollama / Anthropic API) | Ablenkung fuer v1-Demo; regelbasiert reicht fuer Demos |
-| YAML-Config-Export | v1 fokussiert auf Report als primaeren Output |
-| Vercel/Netlify Deployment | Naechster Schritt nach GitHub-Repo |
-| Unit-Tests | bpmnParser.ts und domainEnrichment.ts testen |
-| Weitere BPMN-Templates (O2C, Invoice) | Nach P2P-Feedback |
+- **Workspace:** Bereiche (Areas) enthalten Prozesse. Jeder Prozess = `ProcessEntry` mit BPMN-XML, Steps, Suggestions, Decisions, Summary, optional BusinessCase + SandboxTests.
+- **Suggestion-Pipeline:** `bpmnParser` (DOMParser) → `domainEnrichment` (Mapping-Regeln + Keywords) → optional `llmService.analyzeBatch` (Anthropic/Ollama).
+- **Automation-Level:** 4 Dimensionen (`dataStructure`, `decisionComplexity`, `systemAccess`, `exceptionRate`) → Stufe 0–3 via `automationLevel.computeAutomationLevel`.
+- **Autosave:** Decisions werden mit 2s-Debounce in IndexedDB persistiert (`App.tsx`).
+- **LLM-Config:** Doppelt gespeichert (localStorage-Fallback + Workspace-Settings) — Konsolidierung geplant (Phase 2).
 
 ---
 
@@ -63,52 +43,66 @@ Sekundaer: Milan selbst — als Portfolio-Stueck, Gespraechsoeffner bei Bewerbun
 | Komponente | Technologie |
 |---|---|
 | Framework | React 19 + TypeScript (strict) |
-| BPMN-Rendering | bpmn-js (Camunda, MIT) |
-| BPMN-Parsing | Browser `DOMParser` (kein SDK) |
-| Styling | Custom CSS, plain (kein Tailwind) |
-| State | React Context + `useReducer` |
-| Build | Vite 6 |
+| BPMN | bpmn-js NavigatedViewer (Modeler-Umbau geplant, Phase 3) |
+| State | React Context + `useReducer` (Zustand-Migration geplant, Phase 2) |
+| Persistenz | IndexedDB via `idb` |
+| Dokument-Extraktion | pdfjs-dist (Worker von CDN — Self-Hosting geplant), mammoth (DOCX) |
+| Icons | lucide-react (KEINE Emojis im UI) |
+| Build/Test | Vite 6 + Vitest (jsdom) |
 | Report-Export | `window.print()` + `@media print` |
 
 ---
 
-## 4. Build-Befehle
+## 4. Befehle
 
 ```bash
-npm install        # Abhaengigkeiten installieren
-npm run dev        # Dev-Server auf http://localhost:5173
-npm run build      # Produktionsbuild nach dist/
-npx tsc --noEmit   # TypeScript-Check ohne Build
-npm run preview    # Produktionsbuild lokal vorschauen
+npm install          # Abhängigkeiten installieren
+npm run dev          # Dev-Server auf http://localhost:5173
+npm run build        # Produktionsbuild (tsc -b && vite build) nach dist/
+npm test             # Vitest einmalig ausführen
+npm run test:watch   # Vitest im Watch-Modus
+npx tsc --noEmit -p tsconfig.app.json   # TypeScript-Check ohne Build
 ```
+
+Vor jedem Commit: `npm test` + Typecheck müssen grün sein.
 
 ---
 
 ## 5. Code-Style
 
-- **UI-Texte:** Deutsch (Zielmarkt DACH, v1-Scope)
-- **Code:** Englisch (Variablen, Funktionen, Typen)
-- **TypeScript:** `strict: true`, kein `any` ohne Kommentar mit Begruendung
-- **bpmn-js:** Instanz immer in `useRef`, nie in React-State
-- **CSS:** Utility-Klassen in `styles.css`, keine Inline-Styles ausser dynamisch
+- **UI-Texte:** Deutsch (Zielmarkt DACH). Kein Sprach-Mix (z.B. nicht "Reviewed" neben "Analysiert").
+- **Code:** Englisch (Variablen, Funktionen, Typen).
+- **TypeScript:** `strict: true`, kein `any`.
+- **Icons:** Ausschließlich lucide-react — keine Emojis in UI-Strings.
+- **Buttons:** Nur `primary-button` / `secondary-button` / `danger-button` Klassen verwenden.
+- **Dialoge:** `ConfirmDialog`/`PromptDialog` aus `components/Dialogs.tsx` — niemals `window.prompt`/`window.confirm`.
+- **CSS:** Plain CSS in `src/styles.css`, Design-Tokens unter `:root`. Tote Klassen vermeiden.
+- **Animationen:** Dezent (≤250ms); `prefers-reduced-motion` respektieren.
+- **Engine-Code:** Pure functions, keine React-Imports → jede neue Funktion bekommt einen Test.
 
 ---
 
 ## 6. Wichtige Design-Entscheidungen
 
-- **Parser ohne bpmn-moddle:** Bewusst. `DOMParser` reicht fuer den v1-Scope, reduziert Bundle-Groesse.
-- **Print-CSS statt jsPDF:** Robuster, kein zusaetzliches Paket, funktioniert in allen Browsern.
-- **Conservative Defaults:** `agent_with_approval` als Default fuer generische Tasks — nicht `agent_autonomous`.
-- **Luecken-Marker:** "Unklar"-Antworten erzeugen explizite Luecken im Report (wertvoller als Verdecken).
+- **Parser ohne bpmn-moddle:** Bewusst, DOMParser reicht für v2-Scope. (Graph-basierte Analyse kommt in Phase 3.)
+- **Print-CSS statt jsPDF:** Robust, kein zusätzliches Paket.
+- **Conservative Defaults:** Generische Task → `agent_with_approval`, nie `agent_autonomous`.
+- **Lücken-Marker:** "Unklar"-Antworten erzeugen explizite Klärungsbedarf-Einträge im Report.
+- **Bekannte Engine-Quirks (dokumentiert in Tests, Fixes geplant):**
+  - Keyword-Matching per Substring: "prüfen" matcht in "Rechnung prüfen" vor dem Invoice-Pattern (`domainEnrichment.test.ts`)
+  - BPMN-ID kann als Fallback-"Extension-Name" durchrutschen (`bpmnParser.test.ts`)
+- **Statuswerte:** Aktuell 6 Status inkl. `implementing`/`live` — Reduktion auf 4 geplant (Positionierung: Denkmaterial, nicht Tracking).
 
 ---
 
 ## 7. Referenzdokumente
 
-- **`process2agent_v1_spec.md`** — Vollstaendige Spezifikation mit allen technischen Details.
-- **`MAPPING_TABLE.md`** — Die Mapping-Tabelle als eigenstaendiges, zitierbares Dokument.
-- **`README.md`** — Projektbeschreibung fuer GitHub.
+- **`process2agent_v1_spec.md`** — Historische Spezifikation (v1, teils überholt).
+- **`MAPPING_TABLE.md`** — Kanonische Mapping-Referenz (Deutsch).
+- **`docs/MAPPING_TABLE.md`** — Englische Übersetzung der Mapping-Tabelle.
+- **`ROADMAP.md`** — Historische Roadmap (wird vom aktuellen Umsetzungsplan abgelöst).
+- **`DESIGN_SPEC.md`** — Design-System ("Command Center" Dark Theme).
 
 ---
 
-*Letzte Aktualisierung: 2026-05-14*
+*Letzte Aktualisierung: 2026-08-26*

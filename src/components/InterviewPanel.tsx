@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, CircleHelp, ChevronDown, SkipForward, Upload, FlaskConical } from 'lucide-react';
-import { Users, Bot, GitPullRequest, GitBranch, Plug, Terminal, Bell, ScanText, Sparkles, HelpCircle } from 'lucide-react';
+import { CheckCircle2, CircleHelp, ChevronDown, SkipForward, Upload, FlaskConical, ShieldCheck, RefreshCw, Coins } from 'lucide-react';
+import { Users, Bot, GitPullRequest, GitBranch, Plug, Terminal, Bell, ScanText, Sparkles, HelpCircle, Check, Minus, X, Circle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { COMPLEXITY_LABELS, PATTERN_HINTS, PATTERN_LABELS, PRIVACY_LABELS, TARGET_SYSTEM_OPTIONS } from '../data/mappingRules';
+import { COMPLEXITY_LABELS, PATTERN_HINTS, PATTERN_LABELS, PRIVACY_LABELS, TARGET_SYSTEM_OPTIONS, VERDICT_LABELS } from '../data/mappingRules';
 import { extractDocumentText } from '../engine/documentExtractor';
 import { analyzeSandboxDocument } from '../engine/llmService';
 import { computeAutomationLevel, estimateSTPRate, getAutomationBlueprint, getAutomationLevelLabel } from '../engine/automationLevel';
@@ -362,7 +362,7 @@ export function InterviewPanel({
         {showRisk && (
           <section className="question-block risk-section">
             <div className="section-header" onClick={() => setRiskOpen((v) => !v)}>
-              <h3>🛡️ Risiko-Checkliste</h3>
+              <h3><ShieldCheck size={14} /> Risiko-Checkliste</h3>
               <ChevronDown size={16} className={riskOpen ? 'rotated' : ''} />
             </div>
             {riskOpen && (
@@ -405,7 +405,7 @@ export function InterviewPanel({
         {changeImpactEnabled && (
           <section className="question-block change-section">
             <div className="section-header" onClick={() => setChangeOpen((v) => !v)}>
-              <h3>🔄 Change Impact</h3>
+              <h3><RefreshCw size={14} /> Change Impact</h3>
               <ChevronDown size={16} className={changeOpen ? 'rotated' : ''} />
             </div>
             {changeOpen && (
@@ -431,7 +431,7 @@ export function InterviewPanel({
 
         <section className={`question-block business-case-section ${bcOpen ? 'open' : ''}`}>
           <div className="section-header" onClick={() => setBcOpen((v) => !v)}>
-            <h3>💰 Business Case</h3>
+            <h3><Coins size={14} /> Business Case</h3>
             <ChevronDown size={16} className={bcOpen ? 'rotated' : ''} />
           </div>
           {bcOpen && (
@@ -513,16 +513,19 @@ export function InterviewPanel({
                         {result?.recommendation && <p className="sandbox-recommendation">{result.recommendation}</p>}
                         <div className="sandbox-verdict">
                           <span>Verdict:</span>
-                          {(['correct', 'partial', 'incorrect', 'pending'] as const).map((v) => (
-                            <button
-                              key={v}
-                              className={test.userVerdict === v ? 'verdict-btn selected' : 'verdict-btn'}
-                              type="button"
-                              onClick={() => handleVerdict(v)}
-                            >
-                              {v === 'correct' ? '✓ Korrekt' : v === 'partial' ? '~ Teilweise' : v === 'incorrect' ? '✗ Falsch' : '○ Offen'}
-                            </button>
-                          ))}
+                          {(['correct', 'partial', 'incorrect', 'pending'] as const).map((v) => {
+                            const VerdictIcon = v === 'correct' ? Check : v === 'partial' ? Minus : v === 'incorrect' ? X : Circle;
+                            return (
+                              <button
+                                key={v}
+                                className={test.userVerdict === v ? 'verdict-btn selected' : 'verdict-btn'}
+                                type="button"
+                                onClick={() => handleVerdict(v)}
+                              >
+                                <VerdictIcon size={12} /> {VERDICT_LABELS[v]}
+                              </button>
+                            );
+                          })}
                         </div>
                       </>
                     );

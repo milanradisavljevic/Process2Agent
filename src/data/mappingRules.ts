@@ -1,4 +1,5 @@
 import type { AgenticPattern, ComplexityClass, MappingRule, PrivacyLevel } from '../types';
+import type { SandboxTest } from '../types/workspace';
 
 export const PATTERN_LABELS: Record<AgenticPattern, string> = {
   human_in_the_loop: 'Mensch bleibt im Loop',
@@ -42,6 +43,13 @@ export const COMPLEXITY_LABELS: Record<ComplexityClass, string> = {
 };
 
 export const TARGET_SYSTEM_OPTIONS = ['NAV/Business Central', 'DMS/Archiv', 'Mail/Kommunikation', 'Legacy/Eigenentwicklung', 'Kein IT-System', 'Unklar'];
+
+export const VERDICT_LABELS: Record<SandboxTest['userVerdict'], string> = {
+  correct: 'Korrekt',
+  partial: 'Teilweise',
+  incorrect: 'Falsch',
+  pending: 'Offen',
+};
 
 export const MAPPING_RULES: MappingRule[] = [
   {

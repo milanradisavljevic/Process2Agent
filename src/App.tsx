@@ -9,6 +9,7 @@ import { AnalyzingView } from './components/AnalyzingView';
 import { QuickWinsView } from './components/QuickWinsView';
 import { LLMConfigPanel, loadLLMConfig } from './components/LLMConfigPanel';
 import { WorkspaceLanding } from './components/WorkspaceLanding';
+import { ConfirmDialog, PromptDialog } from './components/Dialogs';
 import { createSuggestions } from './engine/domainEnrichment';
 import { parseBpmnElements } from './engine/bpmnParser';
 import { analyzeBatch } from './engine/llmService';
@@ -23,10 +24,20 @@ interface PendingImport {
   xml: string;
 }
 
+interface ConfirmRequest {
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  danger?: boolean;
+  onConfirm: () => void;
+}
+
 export function App() {
   const [assessmentState, assessmentDispatch] = useReducer(assessmentReducer, initialAssessmentState);
   const [workspaceState, workspaceDispatch] = useReducer(workspaceReducer, initialWorkspaceState);
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
+  const [areaPromptOpen, setAreaPromptOpen] = useState(false);
   const [drawerWidth, setDrawerWidth] = useState(480);
   const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
   const isResizing = useRef(false);
@@ -137,7 +148,7 @@ export function App() {
   const handleCreateArea = useCallback((name?: string): Area | null => {
     if (!workspaceState.workspace) return null;
 
-    const areaName = name ?? window.prompt('Name des neuen Bereichs')?.trim();
+    const areaName = name?.trim();
     if (!areaName) return null;
 
     const area: Area = {
@@ -219,23 +230,36 @@ export function App() {
     assessmentDispatch({ type: 'open_project', project: projectFromProcess(process), decisions: process.decisions });
   }, [workspaceState.processes]);
 
-  const handleDeleteProcess = useCallback(async (processId: string) => {
-    if (!window.confirm('Diesen Prozess wirklich löschen?')) return;
-    await deleteProcess(processId);
-    if (workspaceState.workspace) {
-      const workspace = {
-        ...workspaceState.workspace,
-        areas: workspaceState.workspace.areas.map((area) => (
-          area.processIds.includes(processId)
-            ? { ...area, processIds: area.processIds.filter((id) => id !== processId) }
-            : area
-        )),
-      };
-      await saveWorkspace(workspace);
-      workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes: workspaceState.processes.filter((p) => p.id !== processId) });
-    } else {
-      workspaceDispatch({ type: 'PROCESS_DELETED', processId });
-    }
+  const handleDeleteProcess = useCallback((processId: string) => {
+    const process = workspaceState.processes.find((item) => item.id === processId);
+    if (!process) return;
+
+    setConfirmRequest({
+      title: 'Prozess löschen',
+      message: `"${process.name}" inklusive aller Bewertungen wird unwiderruflich gelöscht.`,
+      confirmLabel: 'Löschen',
+      danger: true,
+      onConfirm: () => {
+        setConfirmRequest(null);
+        void (async () => {
+          await deleteProcess(processId);
+          if (workspaceState.workspace) {
+            const workspace = {
+              ...workspaceState.workspace,
+              areas: workspaceState.workspace.areas.map((area) => (
+                area.processIds.includes(processId)
+                  ? { ...area, processIds: area.processIds.filter((id) => id !== processId) }
+                  : area
+              )),
+            };
+            await saveWorkspace(workspace);
+            workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes: workspaceState.processes.filter((p) => p.id !== processId) });
+          } else {
+            workspaceDispatch({ type: 'PROCESS_DELETED', processId });
+          }
+        })();
+      },
+    });
   }, [workspaceState.workspace, workspaceState.processes]);
 
   const handleStatusChange = useCallback(async (processId: string, status: ProcessStatus) => {
@@ -244,22 +268,35 @@ export function App() {
     await saveAndDispatchProcess({ ...process, status });
   }, [saveAndDispatchProcess, workspaceState.processes]);
 
-  const handleDeleteArea = useCallback(async (areaId: string) => {
+  const handleDeleteArea = useCallback((areaId: string) => {
     if (!workspaceState.workspace) return;
     const area = workspaceState.workspace.areas.find((a) => a.id === areaId);
     if (!area) return;
-    if (!window.confirm(`Bereich "${area.name}" und alle darin enthaltenen Prozesse wirklich löschen?`)) return;
 
-    for (const processId of area.processIds) {
-      await deleteProcess(processId);
-    }
+    setConfirmRequest({
+      title: 'Bereich löschen',
+      message: `Bereich "${area.name}" und alle darin enthaltenen Prozesse werden unwiderruflich gelöscht.`,
+      confirmLabel: 'Bereich löschen',
+      danger: true,
+      onConfirm: () => {
+        setConfirmRequest(null);
+        void (async () => {
+          const currentWorkspace = workspaceState.workspace;
+          if (!currentWorkspace) return;
 
-    const workspace = {
-      ...workspaceState.workspace,
-      areas: workspaceState.workspace.areas.filter((a) => a.id !== areaId),
-    };
-    await saveWorkspace(workspace);
-    workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes: workspaceState.processes.filter((p) => p.areaId !== areaId) });
+          for (const processId of area.processIds) {
+            await deleteProcess(processId);
+          }
+
+          const workspace = {
+            ...currentWorkspace,
+            areas: currentWorkspace.areas.filter((a) => a.id !== areaId),
+          };
+          await saveWorkspace(workspace);
+          workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes: workspaceState.processes.filter((p) => p.areaId !== areaId) });
+        })();
+      },
+    });
   }, [workspaceState.workspace, workspaceState.processes]);
 
   const handleRenameArea = useCallback((area: Area) => {
@@ -291,14 +328,24 @@ export function App() {
     URL.revokeObjectURL(url);
   }, []);
 
-  const handleImportWorkspace = useCallback(async (file: File) => {
-    if (!window.confirm('Vorhandene Daten werden überschrieben. Fortfahren?')) return;
-    await importAll(await file.text());
-    const workspace = await getWorkspace();
-    const processes = await getAllProcesses();
-    if (workspace) {
-      workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes });
-    }
+  const handleImportWorkspace = useCallback((file: File) => {
+    setConfirmRequest({
+      title: 'Workspace importieren',
+      message: 'Vorhandene Daten werden vollständig überschrieben. Fortfahren?',
+      confirmLabel: 'Überschreiben',
+      danger: true,
+      onConfirm: () => {
+        setConfirmRequest(null);
+        void (async () => {
+          await importAll(await file.text());
+          const workspace = await getWorkspace();
+          const processes = await getAllProcesses();
+          if (workspace) {
+            workspaceDispatch({ type: 'WORKSPACE_LOADED', workspace, processes });
+          }
+        })();
+      },
+    });
   }, []);
 
   const handleSaveDecision = useCallback((decision: AssessmentDecision) => {
@@ -343,6 +390,34 @@ export function App() {
     document.removeEventListener('mouseup', handleResizeEnd);
   }
 
+  function renderDialogs() {
+    return (
+      <>
+        {confirmRequest && (
+          <ConfirmDialog
+            title={confirmRequest.title}
+            message={confirmRequest.message}
+            confirmLabel={confirmRequest.confirmLabel}
+            danger={confirmRequest.danger}
+            onConfirm={confirmRequest.onConfirm}
+            onCancel={() => setConfirmRequest(null)}
+          />
+        )}
+        {areaPromptOpen && (
+          <PromptDialog
+            title="Neuen Bereich anlegen"
+            placeholder="z.B. Finance, Einkauf, Logistik"
+            onCancel={() => setAreaPromptOpen(false)}
+            onConfirm={(name) => {
+              handleCreateArea(name);
+              setAreaPromptOpen(false);
+            }}
+          />
+        )}
+      </>
+    );
+  }
+
   if (workspaceState.loading || !workspaceState.workspace) {
     return <div className="view-transition"><AnalyzingView elementCount={0} /></div>;
   }
@@ -362,6 +437,7 @@ export function App() {
             onImport={handleImportProcess}
           />
         ) : null}
+        {renderDialogs()}
       </div>
     );
   }
@@ -372,8 +448,10 @@ export function App() {
         workspace={workspaceState.workspace}
         processes={workspaceState.processes}
         error={workspaceState.error}
+        llmConfig={llmConfig}
+        onLLMConfigChange={handleLLMConfigChange}
         onImport={(areaId) => workspaceDispatch({ type: 'NAVIGATE', view: { page: 'import', targetAreaId: areaId } })}
-        onCreateArea={() => { handleCreateArea(); }}
+        onCreateArea={() => setAreaPromptOpen(true)}
         onRenameArea={handleRenameArea}
         onDeleteArea={handleDeleteArea}
         onOpenProcess={handleOpenProcess}
@@ -381,7 +459,7 @@ export function App() {
         onStatusChange={handleStatusChange}
         onExport={handleExport}
         onImportWorkspace={handleImportWorkspace}
-      /></div>
+      />{renderDialogs()}</div>
     );
   }
 
@@ -400,7 +478,7 @@ export function App() {
         decisions={assessmentState.decisions}
         process={currentProcess ?? undefined}
         onBack={() => workspaceDispatch({ type: 'NAVIGATE', view: { page: 'landing' } })}
-      /></div>
+      />{renderDialogs()}</div>
     );
   }
 
@@ -491,11 +569,13 @@ export function App() {
               onNext={() => assessmentDispatch({ type: 'next_step' })}
               onPrevious={() => assessmentDispatch({ type: 'previous_step' })}
               onReport={handleShowReport}
-              onClose={() => assessmentDispatch({ type: 'close_drawer' })}
-            />
-          </div>
-        </div>
-      )}
+               onClose={() => assessmentDispatch({ type: 'close_drawer' })}
+             />
+           </div>
+         </div>
+       )}
+
+      {renderDialogs()}
     </main>
   );
 }
