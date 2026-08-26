@@ -48,6 +48,12 @@ export const useAssessmentStore = create<AssessmentStore>((set, get) => ({
   llmError: '',
 
   async openProcess(processId) {
+    if (get().activeProcessId === processId) {
+      // Resume: Zustand (Position, Drawer, LLM-Ergebnis) bleibt erhalten.
+      set({ drawerOpen: false });
+      return;
+    }
+
     const workspaceStore = useWorkspaceStore.getState();
     const process = workspaceStore.processes[processId];
     if (!process) return;

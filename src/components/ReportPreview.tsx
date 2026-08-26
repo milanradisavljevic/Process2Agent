@@ -5,9 +5,7 @@ import type { AssessmentDecision, AssessmentProject } from '../types';
 import type { ProcessEntry } from '../types/workspace';
 
 interface ReportPreviewProps {
-  project: AssessmentProject;
-  decisions: Record<string, AssessmentDecision>;
-  process?: ProcessEntry;
+  process: ProcessEntry;
   onBack: () => void;
 }
 
@@ -57,7 +55,13 @@ function DonutChart({ aiSuitable, humanLoop, clarification }: {
   );
 }
 
-export function ReportPreview({ project, decisions, process, onBack }: ReportPreviewProps) {
+export function ReportPreview({ process, onBack }: ReportPreviewProps) {
+  const project: Pick<AssessmentProject, 'fileName' | 'elements' | 'suggestions'> = {
+    fileName: process.name,
+    elements: process.steps,
+    suggestions: process.suggestions,
+  };
+  const decisions: Record<string, AssessmentDecision> = process.decisions;
   const summary = computeAssessmentSummary(project.elements, decisions);
   const createdAt = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date());
   const clarificationItems = project.elements.filter((element) => decisions[element.id]?.status !== 'completed');

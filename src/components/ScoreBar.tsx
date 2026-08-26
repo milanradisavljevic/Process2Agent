@@ -1,14 +1,14 @@
 import { AlertTriangle, Bot, ShieldCheck } from 'lucide-react';
 import { computeAssessmentSummary } from '../engine/processSummary';
-import type { AssessmentDecision, AssessmentProject } from '../types';
+import type { AssessmentDecision, ProcessElement } from '../types';
 
 interface ScoreBarProps {
-  project: AssessmentProject;
+  elements: ProcessElement[];
   decisions: Record<string, AssessmentDecision>;
 }
 
-export function ScoreBar({ project, decisions }: ScoreBarProps) {
-  const summary = computeAssessmentSummary(project.elements, decisions);
+export function ScoreBar({ elements, decisions }: ScoreBarProps) {
+  const summary = computeAssessmentSummary(elements, decisions);
   const aiPercent = summary.total > 0 ? Math.round((summary.aiSuitable / summary.total) * 100) : 0;
 
   return (

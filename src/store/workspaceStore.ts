@@ -26,7 +26,7 @@ interface WorkspaceStore {
   renameArea: (area: Area) => void;
   deleteArea: (areaId: string) => Promise<void>;
 
-  addProcess: (process: ProcessEntry) => Promise<void>;
+  addProcess: (process: ProcessEntry) => Promise<ProcessEntry>;
   updateProcess: (id: string, updater: (process: ProcessEntry) => ProcessEntry) => void;
   persistProcessNow: (id: string) => Promise<void>;
   removeProcess: (id: string) => Promise<void>;
@@ -114,7 +114,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     await saveWorkspace(nextWorkspace);
   },
 
-  async addProcess(process) {
+  async addProcess(process): Promise<ProcessEntry> {
     const saved = await saveProcess(process);
     const workspace = get().workspace;
     if (workspace) {
@@ -124,6 +124,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     } else {
       set({ processes: { ...get().processes, [saved.id]: saved } });
     }
+    return saved;
   },
 
   updateProcess(id, updater) {
