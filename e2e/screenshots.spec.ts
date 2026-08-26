@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const TARGET = process.env.SHOT_TARGET === 'after' ? 'after' : 'before';
+const TARGET = process.env.SHOT_TARGET ?? 'before';
 const OUT_DIR = `docs/reviews/${TARGET}`;
 
 const VIEWPORTS = [
