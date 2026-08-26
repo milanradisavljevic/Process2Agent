@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router';
+import { ArrowLeft } from 'lucide-react';
 import { FileDropZone } from '../components/FileDropZone';
 import { ImportModal } from '../components/ImportModal';
 import { useBpmnImport } from '../hooks/useBpmnImport';
@@ -11,6 +12,12 @@ export function ImportPage() {
 
   return (
     <main className="workspace-landing">
+      <header className="import-header">
+        <button type="button" className="secondary-button" onClick={() => navigate('/')}>
+          <ArrowLeft size={15} /> Zurück
+        </button>
+        <p className="brand">PROCESS2AGENT</p>
+      </header>
       <FileDropZone error={error ?? undefined} onFileLoaded={loadFile} onDemoLoaded={loadDemo} />
       {pendingImport ? (
         <ImportModal

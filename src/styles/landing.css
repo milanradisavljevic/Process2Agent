@@ -11,44 +11,82 @@
   padding: var(--space-8) var(--space-7);
   text-align: center;
   background:
-    radial-gradient(ellipse at 25% -5%, rgba(78,124,255,.12), transparent 55%),
-    radial-gradient(ellipse at 75% 105%, rgba(78,124,255,.08), transparent 55%),
-    linear-gradient(160deg, #0a0c10 0%, #141722 100%);
+    radial-gradient(ellipse at 50% -20%, rgba(78,124,255,.09), transparent 55%),
+    var(--bg-base);
   color: var(--text-primary);
   gap: 0;
 }
 
-.drop-icon {
-  display: grid;
-  place-items: center;
-  width: 5rem;
-  height: 5rem;
-  background: rgba(78,124,255,.08);
-  border: 1px solid rgba(78,124,255,.2);
-  border-radius: var(--r-lg);
-  color: var(--accent-primary);
-  box-shadow: 0 0 0 8px rgba(78,124,255,.06);
-  margin-bottom: var(--space-1);
+.drop-zone .brand {
+  margin-bottom: var(--space-7);
 }
 
 .drop-zone h1 {
-  margin: var(--space-6) 0 .6rem;
+  margin: 0 0 var(--space-3);
   font-size: var(--text-display);
-  font-weight: 900;
-  letter-spacing: -.07em;
+  font-weight: 700;
+  letter-spacing: -.04em;
   line-height: 1;
-  background: linear-gradient(135deg, #ffffff 0%, #93c5fd 60%, #818cf8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
-.drop-zone > p:first-of-type {
-  max-width: 36rem;
-  margin: 0 0 2.5rem;
+.drop-zone h1 .brand-accent {
+  color: var(--accent-primary);
+}
+
+.drop-subtitle {
+  max-width: 34rem;
+  margin: 0 0 var(--space-7);
   color: var(--text-secondary);
   font-size: var(--text-md);
-  line-height: 1.65;
+  line-height: 1.6;
+}
+
+.drop-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  width: min(46rem, 100%);
+  margin: var(--space-7) 0 var(--space-7);
+  text-align: left;
+}
+
+@media (max-width: 767px) {
+  .drop-steps { grid-template-columns: 1fr; }
+}
+
+.drop-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.drop-step-icon {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--r-sm);
+  background: rgba(78,124,255,.1);
+  color: var(--accent-primary);
+}
+
+.drop-step strong {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.drop-step p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .drop-zone-card {
@@ -119,16 +157,43 @@
 
 .workspace-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-6);
+}
+
+.workspace-title .brand {
+  margin: 0 0 var(--space-1);
 }
 
 .workspace-header h1 {
-  margin: .2rem 0 .35rem;
-  font-size: var(--text-display);
-  letter-spacing: -.05em;
+  margin: 0;
+  font-size: var(--text-xl);
+  letter-spacing: -.02em;
+}
+
+.workspace-title .header-summary {
+  margin: var(--space-1) 0 0;
+}
+
+.import-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-6);
+  background: color-mix(in srgb, var(--bg-base) 82%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.drop-zone {
+  padding-top: calc(var(--space-8) + var(--space-7));
 }
 
 .workspace-error { display: inline-block; margin: 0 0 1rem; }
@@ -183,11 +248,21 @@
 }
 
 .area-icon {
-  padding: .22rem .45rem;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
   border-radius: var(--r-sm);
-  font-size: var(--text-xs);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.area-chevron {
+  transition: transform .2s ease;
+}
+
+.area-chevron.collapsed {
+  transform: rotate(-90deg);
 }
 
 .area-name-input {
@@ -213,7 +288,6 @@
 
 .process-card {
   position: relative;
-  min-height: 12rem;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-left: 3px solid var(--color-neutral);
@@ -238,7 +312,6 @@
   align-items: flex-start;
   width: 100%;
   height: 100%;
-  min-height: 12rem;
   padding: var(--space-4);
   color: inherit;
   text-align: left;

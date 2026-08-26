@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { ChevronDown, Folder, Plus, Trash2 } from 'lucide-react';
 import type { Area, ProcessEntry, ProcessStatus } from '../types/workspace';
 import { ProcessCard } from './ProcessCard';
+import { formatCount } from './WorkspaceLanding';
 
 interface AreaSectionProps {
   area: Area;
@@ -42,9 +43,15 @@ export function AreaSection({
   return (
     <section className="area-section">
       <div className="area-header">
-        <button type="button" className="area-title-button" onClick={() => setExpanded((value) => !value)}>
-          <span>{expanded ? '▾' : '▸'}</span>
-          <span className="area-icon">{area.icon}</span>
+        <button
+          type="button"
+          className="area-title-button"
+          onClick={() => setExpanded((value) => !value)}
+          aria-expanded={expanded}
+          aria-label={`${area.name} ${expanded ? 'einklappen' : 'ausklappen'}`}
+        >
+          <ChevronDown size={15} className={expanded ? 'area-chevron' : 'area-chevron collapsed'} />
+          <span className="area-icon"><Folder size={14} strokeWidth={1.8} /></span>
         </button>
         {editing ? (
           <input
@@ -64,8 +71,8 @@ export function AreaSection({
         ) : (
           <h2 onDoubleClick={() => setEditing(true)}>{area.name}</h2>
         )}
-        <p>{processes.length} Prozesse{ savings > 0 ? ` · ~${formatCurrency(savings)} Potenzial` : ''}</p>
-        <button type="button" className="secondary-button compact-area-button" onClick={() => onImport(area.id)}>+</button>
+        <p>{formatCount(processes.length, 'Prozess', 'Prozesse')}{ savings > 0 ? ` · ~${formatCurrency(savings)} Potenzial` : ''}</p>
+        <button type="button" className="secondary-button compact-area-button" onClick={() => onImport(area.id)} aria-label="Prozess in diesem Bereich importieren"><Plus size={14} /></button>
         <button type="button" className="area-delete-btn" onClick={() => onDeleteArea(area.id)} title="Bereich löschen" aria-label="Bereich löschen">
           <Trash2 size={14} />
         </button>

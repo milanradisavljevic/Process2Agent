@@ -30,7 +30,7 @@ for (const vp of VIEWPORTS) {
     const page = await context.newPage();
 
     await page.goto('/#/');
-    await expect(page.getByText('Keine Prozesse im Workspace')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Noch keine Prozesse')).toBeVisible({ timeout: 10_000 });
     await shot(page, `01-landing-empty-${vp.name}`);
 
     await page.goto('/#/import');
@@ -44,8 +44,7 @@ for (const vp of VIEWPORTS) {
     await expect(page.locator('.drawer-panel.open')).toBeVisible();
     await shot(page, `04-drawer-${vp.name}`);
     await page.keyboard.press('Escape');
-    await page.locator('.drawer-overlay').click().catch(() => {});
-    await page.mouse.click(40, 40);
+    await expect(page.locator('.drawer-panel.open')).toHaveCount(0);
 
     await page.getByRole('button', { name: /Report generieren/ }).click();
     await expect(page.locator('.report-document')).toBeVisible();

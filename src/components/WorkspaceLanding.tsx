@@ -45,11 +45,12 @@ export function WorkspaceLanding({
   return (
     <main className="workspace-landing">
       <header className="workspace-header">
-        <div>
+        <div className="workspace-title">
           <p className="brand">PROCESS2AGENT</p>
           <h1>{workspace.name}</h1>
           <p className="header-summary">
-            {processes.length} Prozesse · {workspace.areas.length} Bereiche{savings > 0 ? ` · ~${formatCurrency(savings)} Einsparungspotenzial` : ''}
+            {formatCount(processes.length, 'Prozess', 'Prozesse')} · {formatCount(workspace.areas.length, 'Bereich', 'Bereiche')}
+            {savings > 0 ? ` · ~${formatCurrency(savings)} Einsparungspotenzial` : ''}
           </p>
         </div>
         <div className="header-actions">
@@ -60,32 +61,34 @@ export function WorkspaceLanding({
         </div>
       </header>
       {error ? <p className="error-text workspace-error">{error}</p> : null}
-      <div className="area-list">
-        {workspace.areas
-          .slice()
-          .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map((area) => (
-            <AreaSection
-              key={area.id}
-              area={area}
-              processes={processes.filter((process) => process.areaId === area.id)}
-              onImport={onImport}
-              onOpenProcess={onOpenProcess}
-              onDeleteProcess={onDeleteProcess}
-              onStatusChange={onStatusChange}
-              onRenameArea={onRenameArea}
-              onDeleteArea={onDeleteArea}
-            />
-          ))}
-      </div>
+      {processes.length > 0 && (
+        <div className="area-list">
+          {workspace.areas
+            .slice()
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((area) => (
+              <AreaSection
+                key={area.id}
+                area={area}
+                processes={processes.filter((process) => process.areaId === area.id)}
+                onImport={onImport}
+                onOpenProcess={onOpenProcess}
+                onDeleteProcess={onDeleteProcess}
+                onStatusChange={onStatusChange}
+                onRenameArea={onRenameArea}
+                onDeleteArea={onDeleteArea}
+              />
+            ))}
+        </div>
+      )}
       {processes.length === 0 && (
         <div className="workspace-empty">
-          <div className="workspace-empty-icon"><Inbox size={44} strokeWidth={1.4} /></div>
-          <h2>Keine Prozesse im Workspace</h2>
-          <p>Importieren Sie Ihr erstes BPMN-Modell, um die AI-Readiness-Bewertung zu starten.</p>
+          <div className="workspace-empty-icon"><Inbox size={40} strokeWidth={1.5} /></div>
+          <h2>Noch keine Prozesse</h2>
+          <p>Importiere ein BPMN-Modell (Signavio, Camunda, bpmn.io) oder lade den Demo-Prozess, um die AI-Readiness-Bewertung zu starten.</p>
           <div className="workspace-empty-actions">
             <button type="button" className="primary-button" onClick={() => onImport()}>
-              <Plus size={18} /> BPMN importieren
+              <Plus size={16} /> BPMN importieren
             </button>
             <button type="button" className="secondary-button" onClick={onDemoImport}>
               <Sparkles size={15} /> Demo-Prozess laden
@@ -95,6 +98,10 @@ export function WorkspaceLanding({
       )}
     </main>
   );
+}
+
+export function formatCount(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function formatCurrency(value: number): string {

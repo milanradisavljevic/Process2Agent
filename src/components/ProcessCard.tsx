@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { MoreVertical } from 'lucide-react';
+import { ArrowRight, MoreVertical } from 'lucide-react';
 import type { ProcessEntry, ProcessStatus } from '../types/workspace';
 
 interface ProcessCardProps {
@@ -40,12 +40,14 @@ export function ProcessCard({ process, onOpen, onDelete, onStatusChange }: Proce
         <h3>{process.name}</h3>
         <p>{process.summary.laneCount} Lanes · {process.summary.totalSteps} Schritte</p>
         {canAnalyze ? (
-          <strong className="process-card-cta">Analyse starten →</strong>
+          <strong className="process-card-cta">Analyse starten <ArrowRight size={13} /></strong>
         ) : (
-          <div className="process-card-metrics">
-            <span>{process.summary.quickWins} Quick Wins</span>
-            {process.summary.estimatedAnnualSavings ? <span>~{formatCurrency(process.summary.estimatedAnnualSavings)}/Jahr</span> : null}
-          </div>
+          (process.summary.quickWins > 0 || process.summary.estimatedAnnualSavings) && (
+            <div className="process-card-metrics">
+              {process.summary.quickWins > 0 && <span>{process.summary.quickWins} Quick Wins</span>}
+              {process.summary.estimatedAnnualSavings && <span>~{formatCurrency(process.summary.estimatedAnnualSavings)}/Jahr</span>}
+            </div>
+          )
         )}
         <small>Zuletzt: {updatedAt}</small>
       </button>
