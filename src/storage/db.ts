@@ -71,9 +71,7 @@ export async function getProcessesByArea(areaId: string): Promise<ProcessEntry[]
 export async function getAllProcesses(): Promise<ProcessEntry[]> {
   const db = await dbPromise;
   const processes = await db.getAll('processes');
-  return processes
-    .map((process) => ({ ...process, status: normalizeStatus(process.status) }))
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return processes.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 export async function exportAll(): Promise<string> {
@@ -81,7 +79,7 @@ export async function exportAll(): Promise<string> {
   const processes = await getAllProcesses();
 
   return JSON.stringify({
-    version: '1.0',
+    version: '2.0',
     exportedAt: new Date().toISOString(),
     workspace,
     processes,
@@ -89,18 +87,27 @@ export async function exportAll(): Promise<string> {
 }
 
 export async function importAll(json: string): Promise<void> {
-  const parsed = JSON.parse(json) as { workspace?: Workspace; processes?: ProcessEntry[] };
+  const parsed = JSON.parse(json) as { version?: string; workspace?: Workspace; processes?: ProcessEntry[] };
 
   if (!parsed.workspace || !Array.isArray(parsed.processes)) {
     throw new Error('Die Datei ist kein gültiger process2agent-Export.');
   }
+
+  if (parsed.version !== undefined && !parsed.version.startsWith('1.') && !parsed.version.startsWith('2.')) {
+    throw new Error(`Nicht unterstützte Export-Version: ${parsed.version}`);
+  }
+
+  const normalizedProcesses = parsed.processes.map((process) => ({
+    ...process,
+    status: normalizeStatus(process.status),
+  }));
 
   const db = await dbPromise;
   const tx = db.transaction(['workspace', 'processes'], 'readwrite');
   await tx.objectStore('workspace').put(parsed.workspace, WORKSPACE_KEY);
   await tx.objectStore('processes').clear();
 
-  for (const process of parsed.processes) {
+  for (const process of normalizedProcesses) {
     await tx.objectStore('processes').put(process);
   }
 

@@ -20,7 +20,6 @@ export interface WorkspaceSettings {
     ollamaModel?: string;
   };
   locale: 'de' | 'en';
-  changeImpactEnabled: boolean;
 }
 
 export interface Area {

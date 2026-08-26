@@ -38,7 +38,6 @@ interface InterviewPanelProps {
   process?: ProcessEntry;
   llmConfig?: LLMConfig;
   defaultHourlyRates?: Record<string, number>;
-  changeImpactEnabled?: boolean;
   onSave: (decision: AssessmentDecision) => void;
   onSaveBusinessCase: (businessCase: ProcessBusinessCase) => void;
   onSaveSandboxTest: (test: SandboxTest) => void;
@@ -57,7 +56,6 @@ export function InterviewPanel({
   process,
   llmConfig,
   defaultHourlyRates = {},
-  changeImpactEnabled = false,
   onSave,
   onSaveBusinessCase,
   onSaveSandboxTest,
@@ -152,7 +150,7 @@ export function InterviewPanel({
       note,
       status,
       riskChecklist: showRisk ? { containsPII: riskContainsPII, decisionReversible: riskDecisionReversible, humanApprovalExists: riskHumanApproval } : undefined,
-      changeImpact: changeImpactEnabled ? { affectedSystems: changeSystems, changeManagementRequired: changeMgmt } : undefined,
+      changeImpact: { affectedSystems: changeSystems, changeManagementRequired: changeMgmt },
       dimensions: automationDimensions,
     };
   }
@@ -402,32 +400,30 @@ export function InterviewPanel({
           </section>
         )}
 
-        {changeImpactEnabled && (
-          <section className="question-block change-section">
-            <div className="section-header" onClick={() => setChangeOpen((v) => !v)}>
-              <h3><RefreshCw size={14} /> Change Impact</h3>
-              <ChevronDown size={16} className={changeOpen ? 'rotated' : ''} />
-            </div>
-            {changeOpen && (
-              <div className="change-fields">
-                <label className="field-label">
-                  Betroffene Systeme / Stakeholder
-                  <input value={changeSystems} onChange={(e) => setChangeSystems(e.target.value)} placeholder="z.B. SAP, E-Mail-System, Vertrieb" />
-                </label>
-                <div className="risk-field">
-                  <label>Change Management erforderlich?</label>
-                  <div className="choice-grid compact-grid">
-                    {(['yes', 'no'] as const).map((v) => (
-                      <button key={v} className={changeMgmt === v ? 'choice-pill selected' : 'choice-pill'} type="button" onClick={() => setChangeMgmt(v)}>
-                        {v === 'yes' ? 'Ja' : 'Nein'}
-                      </button>
-                    ))}
-                  </div>
+        <section className="question-block change-section">
+          <div className="section-header" onClick={() => setChangeOpen((v) => !v)}>
+            <h3><RefreshCw size={14} /> Change Impact</h3>
+            <ChevronDown size={16} className={changeOpen ? 'rotated' : ''} />
+          </div>
+          {changeOpen && (
+            <div className="change-fields">
+              <label className="field-label">
+                Betroffene Systeme / Stakeholder
+                <input value={changeSystems} onChange={(e) => setChangeSystems(e.target.value)} placeholder="z.B. SAP, E-Mail-System, Vertrieb" />
+              </label>
+              <div className="risk-field">
+                <label>Change Management erforderlich?</label>
+                <div className="choice-grid compact-grid">
+                  {(['yes', 'no'] as const).map((v) => (
+                    <button key={v} className={changeMgmt === v ? 'choice-pill selected' : 'choice-pill'} type="button" onClick={() => setChangeMgmt(v)}>
+                      {v === 'yes' ? 'Ja' : 'Nein'}
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
-          </section>
-        )}
+            </div>
+          )}
+        </section>
 
         <section className={`question-block business-case-section ${bcOpen ? 'open' : ''}`}>
           <div className="section-header" onClick={() => setBcOpen((v) => !v)}>

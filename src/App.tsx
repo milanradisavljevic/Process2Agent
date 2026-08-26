@@ -569,7 +569,6 @@ export function App() {
               process={currentProcess ?? undefined}
               llmConfig={llmConfig}
               defaultHourlyRates={workspaceState.workspace?.settings.defaultHourlyRates}
-              changeImpactEnabled={workspaceState.workspace?.settings.changeImpactEnabled ?? false}
               onSave={handleSaveDecision}
               onSaveBusinessCase={handleSaveBusinessCase}
               onSaveSandboxTest={handleSaveSandboxTest}
@@ -608,7 +607,6 @@ function createDefaultWorkspace(): Workspace {
       llmProvider: 'none',
       llmConfig: {},
       locale: 'de',
-      changeImpactEnabled: false,
     }, config),
     createdAt: now,
     updatedAt: now,
