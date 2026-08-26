@@ -1,4 +1,5 @@
 import { openDB, type DBSchema } from 'idb';
+import { deriveStatus, normalizeStatus } from '../engine/processSummary';
 import type { ProcessEntry, ProcessStatus, Workspace } from '../types/workspace';
 
 const DB_NAME = 'process2agent';
@@ -53,12 +54,11 @@ export async function getProcess(id: string): Promise<ProcessEntry | undefined> 
 
 export async function saveProcess(process: ProcessEntry): Promise<ProcessEntry> {
   const db = await dbPromise;
-  const nextProcess = applyAutomaticStatus({ ...process, updatedAt: new Date().toISOString() });
+  const nextStatus = deriveStatus(process.status, process.steps, process.suggestions, process.decisions);
+  const nextProcess: ProcessEntry = { ...process, status: nextStatus, updatedAt: new Date().toISOString() };
   await db.put('processes', nextProcess);
   return nextProcess;
-}
-
-export async function deleteProcess(id: string): Promise<void> {
+}export async function deleteProcess(id: string): Promise<void> {
   const db = await dbPromise;
   await db.delete('processes', id);
 }
@@ -71,7 +71,9 @@ export async function getProcessesByArea(areaId: string): Promise<ProcessEntry[]
 export async function getAllProcesses(): Promise<ProcessEntry[]> {
   const db = await dbPromise;
   const processes = await db.getAll('processes');
-  return processes.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return processes
+    .map((process) => ({ ...process, status: normalizeStatus(process.status) }))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 export async function exportAll(): Promise<string> {
@@ -103,23 +105,4 @@ export async function importAll(json: string): Promise<void> {
   }
 
   await tx.done;
-}
-
-function applyAutomaticStatus(process: ProcessEntry): ProcessEntry {
-  if (['validated', 'implementing', 'live'].includes(process.status)) {
-    return process;
-  }
-
-  const hasAnalyzedSteps = process.steps.length > 0 && process.steps.every((step) => Boolean(process.suggestions[step.id]));
-  const hasReviewedSteps = process.steps.length > 0 && process.steps.every((step) => Boolean(process.decisions[step.id]));
-
-  if (hasReviewedSteps) {
-    return { ...process, status: 'reviewed' };
-  }
-
-  if (hasAnalyzedSteps) {
-    return { ...process, status: 'analyzed' };
-  }
-
-  return { ...process, status: 'imported' };
 }

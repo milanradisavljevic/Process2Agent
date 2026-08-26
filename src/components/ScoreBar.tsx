@@ -1,5 +1,5 @@
 import { AlertTriangle, Bot, ShieldCheck } from 'lucide-react';
-import { summarizeAssessment } from '../engine/reportGenerator';
+import { computeAssessmentSummary } from '../engine/processSummary';
 import type { AssessmentDecision, AssessmentProject } from '../types';
 
 interface ScoreBarProps {
@@ -8,7 +8,7 @@ interface ScoreBarProps {
 }
 
 export function ScoreBar({ project, decisions }: ScoreBarProps) {
-  const summary = summarizeAssessment(project, decisions);
+  const summary = computeAssessmentSummary(project.elements, decisions);
   const aiPercent = summary.total > 0 ? Math.round((summary.aiSuitable / summary.total) * 100) : 0;
 
   return (

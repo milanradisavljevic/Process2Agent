@@ -1,6 +1,6 @@
 import { COMPLEXITY_LABELS, MAPPING_RULES, PATTERN_LABELS, PRIVACY_LABELS, VERDICT_LABELS } from '../data/mappingRules';
 import { getAutomationLevelLabel, estimateSTPRate } from '../engine/automationLevel';
-import { summarizeAssessment } from '../engine/reportGenerator';
+import { computeAssessmentSummary } from '../engine/processSummary';
 import type { AssessmentDecision, AssessmentProject } from '../types';
 import type { ProcessEntry } from '../types/workspace';
 
@@ -58,7 +58,7 @@ function DonutChart({ aiSuitable, humanLoop, clarification }: {
 }
 
 export function ReportPreview({ project, decisions, process, onBack }: ReportPreviewProps) {
-  const summary = summarizeAssessment(project, decisions);
+  const summary = computeAssessmentSummary(project.elements, decisions);
   const createdAt = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date());
   const clarificationItems = project.elements.filter((element) => decisions[element.id]?.status !== 'completed');
   const aiPercent = summary.total > 0 ? Math.round((summary.aiSuitable / summary.total) * 100) : 0;

@@ -13,11 +13,12 @@ import { ConfirmDialog, PromptDialog } from './components/Dialogs';
 import { createSuggestions } from './engine/domainEnrichment';
 import { parseBpmnElements } from './engine/bpmnParser';
 import { analyzeBatch } from './engine/llmService';
+import { computeProcessSummary } from './engine/processSummary';
 import { assessmentReducer, initialAssessmentState } from './state/assessmentReducer';
 import { initialWorkspaceState, workspaceReducer } from './state/workspaceReducer';
 import { deleteProcess, exportAll, getAllProcesses, getWorkspace, importAll, saveProcess, saveWorkspace } from './storage/db';
 import type { AssessmentDecision, AssessmentProject, LLMConfig } from './types';
-import type { Area, ProcessBusinessCase, ProcessEntry, ProcessStatus, ProcessSummary, SandboxTest, Workspace, WorkspaceSettings } from './types/workspace';
+import type { Area, ProcessBusinessCase, ProcessEntry, ProcessStatus, SandboxTest, Workspace, WorkspaceSettings } from './types/workspace';
 import demoProduktlaunchXml from '../demo_produktlaunch.bpmn?raw';
 
 interface PendingImport {
@@ -196,7 +197,7 @@ export function App() {
         steps: elements,
         suggestions,
         decisions: {},
-        summary: summarizeProcess(elements, suggestions, {}, undefined),
+        summary: computeProcessSummary(elements, suggestions, {}, undefined),
       };
       const savedProcess = await saveProcess(process);
       const workspace = addProcessToWorkspaceArea(workspaceState.workspace, areaId, savedProcess.id);
@@ -226,7 +227,7 @@ export function App() {
 
     if (Object.keys(process.suggestions).length === 0) {
       const suggestions = createSuggestions(process.steps);
-      const nextProcess = await saveProcess({ ...process, suggestions, summary: summarizeProcess(process.steps, suggestions, process.decisions, process.businessCase) });
+      const nextProcess = await saveProcess({ ...process, suggestions, summary: computeProcessSummary(process.steps, suggestions, process.decisions, process.businessCase) });
       workspaceDispatch({ type: 'PROCESS_SAVED', process: nextProcess });
       assessmentDispatch({ type: 'load_project', project: projectFromProcess(nextProcess) });
       return;
@@ -362,7 +363,7 @@ export function App() {
     const nextProcess: ProcessEntry = {
       ...currentProcess,
       businessCase,
-      summary: summarizeProcess(currentProcess.steps, currentProcess.suggestions, currentProcess.decisions, businessCase),
+      summary: computeProcessSummary(currentProcess.steps, currentProcess.suggestions, currentProcess.decisions, businessCase),
     };
     void saveAndDispatchProcess(nextProcess);
   }, [currentProcess, saveAndDispatchProcess]);
@@ -635,40 +636,7 @@ function processFromAssessment(
     steps: project.elements,
     suggestions: project.suggestions,
     decisions,
-    summary: summarizeProcess(project.elements, project.suggestions, decisions, process.businessCase),
-  };
-}
-
-function summarizeProcess(
-  elements: AssessmentProject['elements'],
-  suggestions: AssessmentProject['suggestions'],
-  decisions: Record<string, AssessmentDecision>,
-  businessCase?: ProcessBusinessCase,
-): ProcessSummary {
-  const laneNames = Array.from(new Set(elements.map((element) => element.laneName).filter((lane): lane is string => Boolean(lane))));
-  const automationPatterns = new Set(['agent_autonomous', 'agent_with_approval', 'llm_classification', 'llm_generation', 'mcp_or_api_call', 'rule_based_automation', 'local_code_execution']);
-
-  let estimatedAnnualSavings: number | undefined;
-  if (businessCase) {
-    let total = 0;
-    for (const step of elements) {
-      const bc = businessCase.stepCases[step.id];
-      if (bc) {
-        total += (bc.frequencyPerYear * bc.minutesPerExecution / 60) * bc.hourlyRate * bc.automationDegree;
-      }
-    }
-    if (total > 0) estimatedAnnualSavings = Math.round(total);
-  }
-
-  return {
-    totalSteps: elements.length,
-    quickWins: elements.filter((element) => suggestions[element.id]?.quick_win).length,
-    automationPotential: elements.filter((element) => automationPatterns.has((decisions[element.id]?.pattern ?? suggestions[element.id]?.pattern) ?? '')).length,
-    humanInLoop: elements.filter((element) => (decisions[element.id]?.pattern ?? suggestions[element.id]?.pattern) === 'human_in_the_loop').length,
-    clarificationNeeded: elements.filter((element) => !decisions[element.id] || decisions[element.id].status !== 'completed').length,
-    estimatedAnnualSavings,
-    laneCount: laneNames.length,
-    laneNames,
+    summary: computeProcessSummary(project.elements, project.suggestions, decisions, process.businessCase),
   };
 }
 
