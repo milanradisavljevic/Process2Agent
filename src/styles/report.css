@@ -54,13 +54,24 @@
 }
 
 .executive-summary {
-  padding: 1.1rem var(--space-5);
+  padding: var(--space-4) var(--space-5);
   color: #0f172a;
   background: rgba(96, 165, 250, .08);
   border: 1px solid #e2e8f0;
   border-left: 4px solid var(--color-potential);
   border-radius: var(--r-md);
   line-height: 1.65;
+  font-size: var(--text-md);
+}
+
+.report-empty-hint {
+  margin: var(--space-4) 0;
+  padding: var(--space-4) var(--space-5);
+  color: #475569;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: var(--r-md);
+  line-height: 1.6;
   font-size: var(--text-md);
 }
 

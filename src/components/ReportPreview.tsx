@@ -91,10 +91,18 @@ export function ReportPreview({ process, onBack }: ReportPreviewProps) {
 
         <section>
           <h2>Zusammenfassung</h2>
-          <DonutChart aiSuitable={summary.aiSuitable} humanLoop={summary.humanLoop} clarification={summary.clarification} />
+          {summary.clarification === summary.total ? (
+            <p className="report-empty-hint">
+              Für diesen Prozess liegen noch keine dokumentierten Entscheidungen vor. Die Zusammenfassung füllt sich,
+              sobald im Assessment Entscheidungen pro Schritt getroffen wurden.
+            </p>
+          ) : (
+            <DonutChart aiSuitable={summary.aiSuitable} humanLoop={summary.humanLoop} clarification={summary.clarification} />
+          )}
           <p className="executive-summary">
-            Der Prozess enthält {summary.total} bewertbare Schritte. Nach aktuellem Stand sind {summary.aiSuitable} Schritte ({aiPercent}%) KI-geeignet,
-            {summary.humanLoop} Schritte bleiben bewusst menschlich kontrolliert und {summary.clarification} Punkte müssen vor einer Umsetzung geklärt werden.
+            Der Prozess enthält {summary.total} bewertbare Schritte. Nach aktuellem Stand sind {summary.aiSuitable} Schritte
+            ({aiPercent}%) KI-geeignet, {summary.humanLoop} Schritte bleiben bewusst menschlich kontrolliert und{' '}
+            {summary.clarification} Punkte müssen vor einer Umsetzung geklärt werden.
           </p>
           <table>
             <tbody>
