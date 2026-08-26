@@ -5,3 +5,10 @@ dist/
 .env
 .env.*
 *.Zone.Identifier
+
+# Interne Session-Notizen / Transkripte — niemals pushen
+session-*.md
+
+# Playwright-Laufzeitartefakte
+test-results/
+playwright-report/
