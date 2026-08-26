@@ -60,7 +60,7 @@ export function LLMConfigPanel({ config, onConfigChange }: LLMConfigPanelProps) 
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>LLM-Konfiguration</h2>
-              <button type="button" className="modal-close" onClick={() => setOpen(false)}>
+              <button type="button" className="modal-close" onClick={() => setOpen(false)} aria-label="Schließen">
                 <X size={18} />
               </button>
             </div>

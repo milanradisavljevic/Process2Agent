@@ -50,7 +50,14 @@ export function ProcessCard({ process, onOpen, onDelete, onStatusChange }: Proce
         <small>Zuletzt: {updatedAt}</small>
       </button>
       <div ref={menuRef} className="process-card-menu">
-        <button type="button" className="menu-toggle" onClick={() => setMenuOpen((v) => !v)}>
+        <button
+          type="button"
+          className="menu-toggle"
+          aria-label="Prozess-Aktionen"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((v) => !v)}
+        >
           <MoreVertical size={16} />
         </button>
         <div className={`process-menu-popover ${menuOpen ? 'open' : ''}`}>

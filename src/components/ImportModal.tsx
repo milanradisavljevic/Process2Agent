@@ -36,7 +36,7 @@ export function ImportModal({ fileName, areas, targetAreaId, onCancel, onImport,
       <div className="modal-panel" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h2>BPMN importieren</h2>
-          <button type="button" className="modal-close" onClick={onCancel}>✕</button>
+          <button type="button" className="modal-close" onClick={onCancel} aria-label="Schließen">✕</button>
         </div>
         <div className="modal-body">
           <label className="config-label">

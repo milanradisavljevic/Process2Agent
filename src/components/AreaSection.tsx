@@ -66,7 +66,7 @@ export function AreaSection({
         )}
         <p>{processes.length} Prozesse{ savings > 0 ? ` · ~${formatCurrency(savings)} Potenzial` : ''}</p>
         <button type="button" className="secondary-button compact-area-button" onClick={() => onImport(area.id)}>+</button>
-        <button type="button" className="area-delete-btn" onClick={() => onDeleteArea(area.id)} title="Bereich löschen">
+        <button type="button" className="area-delete-btn" onClick={() => onDeleteArea(area.id)} title="Bereich löschen" aria-label="Bereich löschen">
           <Trash2 size={14} />
         </button>
       </div>
