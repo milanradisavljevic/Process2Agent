@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Upload, ShieldCheck } from 'lucide-react';
+import { Upload, ShieldCheck, Sparkles } from 'lucide-react';
 
 interface FileDropZoneProps {
   onFileLoaded: (fileName: string, xml: string) => void;
+  onDemoLoaded?: () => void;
   error?: string;
 }
 
-export function FileDropZone({ onFileLoaded, error }: FileDropZoneProps) {
+export function FileDropZone({ onFileLoaded, onDemoLoaded, error }: FileDropZoneProps) {
   const [dragOver, setDragOver] = useState(false);
 
   async function handleFile(file: File) {
@@ -45,6 +46,11 @@ export function FileDropZone({ onFileLoaded, error }: FileDropZoneProps) {
             }}
           />
         </label>
+        {onDemoLoaded && (
+          <button type="button" className="secondary-button drop-demo-button" onClick={onDemoLoaded}>
+            <Sparkles size={15} /> Demo-Prozess laden
+          </button>
+        )}
         <p className="drop-hint">
           Oder BPMN-Datei hierher ziehen · Signavio, Camunda, BPMN.io
         </p>

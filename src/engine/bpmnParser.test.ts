@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseBpmnElements } from './bpmnParser';
 import demoXml from '../../demo_produktlaunch.bpmn?raw';
+import p2pXml from '../../demo_p2p_bestellung.bpmn?raw';
 
 const VALID_BPMN = `<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -82,5 +83,18 @@ describe('parseBpmnElements', () => {
     expect(elements.length).toBeGreaterThanOrEqual(15);
     const laneNames = new Set(elements.map((el) => el.laneName));
     expect(laneNames.size).toBeGreaterThanOrEqual(4);
+  });
+
+  it('parst die P2P-Demo mit spezialisierten Task-Typen und Dokumentation', () => {
+    const elements = parseBpmnElements(p2pXml);
+    const types = new Set(elements.map((el) => el.bpmnType));
+
+    for (const type of ['bpmn:UserTask', 'bpmn:ServiceTask', 'bpmn:BusinessRuleTask', 'bpmn:ScriptTask', 'bpmn:SendTask', 'bpmn:ManualTask', 'bpmn:ExclusiveGateway']) {
+      expect(types.has(type), `erwartet ${type}`).toBe(true);
+    }
+
+    const rechnung = elements.find((el) => el.name.includes('Rechnung prüfen'));
+    expect(rechnung?.laneName).toBe('Buchhaltung');
+    expect(rechnung?.documentation).toContain('3-Way-Match');
   });
 });

@@ -1,4 +1,4 @@
-import { Inbox, Plus } from 'lucide-react';
+import { Inbox, Plus, Sparkles } from 'lucide-react';
 import type { LLMConfig } from '../types';
 import type { Area, ProcessEntry, ProcessStatus, Workspace } from '../types/workspace';
 import { AreaSection } from './AreaSection';
@@ -12,6 +12,7 @@ interface WorkspaceLandingProps {
   llmConfig: LLMConfig;
   onLLMConfigChange: (config: LLMConfig) => void;
   onImport: (areaId?: string) => void;
+  onDemoImport: () => void;
   onCreateArea: () => void;
   onRenameArea: (area: Area) => void;
   onDeleteArea: (areaId: string) => void;
@@ -29,6 +30,7 @@ export function WorkspaceLanding({
   llmConfig,
   onLLMConfigChange,
   onImport,
+  onDemoImport,
   onCreateArea,
   onRenameArea,
   onDeleteArea,
@@ -81,9 +83,14 @@ export function WorkspaceLanding({
           <div className="workspace-empty-icon"><Inbox size={44} strokeWidth={1.4} /></div>
           <h2>Keine Prozesse im Workspace</h2>
           <p>Importieren Sie Ihr erstes BPMN-Modell, um die AI-Readiness-Bewertung zu starten.</p>
-          <button type="button" className="primary-button" onClick={() => onImport()}>
-            <Plus size={18} /> BPMN importieren
-          </button>
+          <div className="workspace-empty-actions">
+            <button type="button" className="primary-button" onClick={() => onImport()}>
+              <Plus size={18} /> BPMN importieren
+            </button>
+            <button type="button" className="secondary-button" onClick={onDemoImport}>
+              <Sparkles size={15} /> Demo-Prozess laden
+            </button>
+          </div>
         </div>
       )}
     </main>

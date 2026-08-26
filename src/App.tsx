@@ -18,6 +18,7 @@ import { initialWorkspaceState, workspaceReducer } from './state/workspaceReduce
 import { deleteProcess, exportAll, getAllProcesses, getWorkspace, importAll, saveProcess, saveWorkspace } from './storage/db';
 import type { AssessmentDecision, AssessmentProject, LLMConfig } from './types';
 import type { Area, ProcessBusinessCase, ProcessEntry, ProcessStatus, ProcessSummary, SandboxTest, Workspace, WorkspaceSettings } from './types/workspace';
+import demoProduktlaunchXml from '../demo_produktlaunch.bpmn?raw';
 
 interface PendingImport {
   fileName: string;
@@ -143,6 +144,10 @@ export function App() {
 
   const handleFileLoaded = useCallback((fileName: string, xml: string) => {
     setPendingImport({ fileName, xml });
+  }, []);
+
+  const handleDemoLoaded = useCallback(() => {
+    setPendingImport({ fileName: 'demo-produktlaunch.bpmn', xml: demoProduktlaunchXml });
   }, []);
 
   const handleCreateArea = useCallback((name?: string): Area | null => {
@@ -426,7 +431,7 @@ export function App() {
     const workspace = workspaceState.workspace;
     return (
       <div className="view-transition">
-        <FileDropZone error={workspaceState.error ?? undefined} onFileLoaded={handleFileLoaded} />
+        <FileDropZone error={workspaceState.error ?? undefined} onFileLoaded={handleFileLoaded} onDemoLoaded={handleDemoLoaded} />
         {pendingImport ? (
           <ImportModal
             fileName={pendingImport.fileName}
@@ -451,6 +456,7 @@ export function App() {
         llmConfig={llmConfig}
         onLLMConfigChange={handleLLMConfigChange}
         onImport={(areaId) => workspaceDispatch({ type: 'NAVIGATE', view: { page: 'import', targetAreaId: areaId } })}
+        onDemoImport={handleDemoLoaded}
         onCreateArea={() => setAreaPromptOpen(true)}
         onRenameArea={handleRenameArea}
         onDeleteArea={handleDeleteArea}

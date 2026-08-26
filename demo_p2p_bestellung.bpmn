@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_P2P"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="process2agent"
+                  exporterVersion="1.0">
+
+  <bpmn:collaboration id="Collaboration_P2P">
+    <bpmn:participant id="Pool_P2P" name="Bestellung zur Zahlung (P2P)" processRef="Process_P2P" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_P2P" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_P2P">
+      <bpmn:lane id="Lane_Einkauf" name="Einkauf">
+        <bpmn:flowNodeRef>Start_Bedarf</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Bedarf</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Budget</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Bestellung</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Bestaetigung</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Bestellt</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Wareneingang" name="Wareneingang">
+        <bpmn:flowNodeRef>Task_Wareneingang</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Kontrolle</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Buchhaltung" name="Buchhaltung">
+        <bpmn:flowNodeRef>Task_Rechnung</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Abweichung</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Freigabe</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Klaerfall</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Klaerfall</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Skonto</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Zahlung</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Zahlung</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="Start_Bedarf" name="Bedarf erkannt">
+      <bpmn:outgoing>f1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Task_Bedarf" name="Bedarfsanforderung erstellen">
+      <bpmn:documentation>Bedarf aus Produktionsmeldung erfassen und Budgetprüfung anstoßen.</bpmn:documentation>
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:businessRuleTask id="Task_Budget" name="Budgetregel prüfen">
+      <bpmn:documentation>Prüfung gegen Budgettabelle und Dispo-Limit — DMN-kompatible Regel.</bpmn:documentation>
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+
+    <bpmn:serviceTask id="Task_Bestellung" name="Bestellung anlegen">
+      <bpmn:documentation>OData-POST auf Purchase Order API des NAV/Business Central.</bpmn:documentation>
+      <bpmn:incoming>f3</bpmn:incoming>
+      <bpmn:outgoing>f4</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sendTask id="Task_Bestaetigung" name="Bestellbestätigung an Lieferant senden">
+      <bpmn:incoming>f4</bpmn:incoming>
+      <bpmn:outgoing>f5</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:endEvent id="End_Bestellt" name="Bestellung übermittelt">
+      <bpmn:incoming>f5</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:serviceTask id="Task_Wareneingang" name="Wareneingang buchen">
+      <bpmn:documentation>Mengen- und Qualitätsabgleich gegen Bestellposition.</bpmn:documentation>
+      <bpmn:incoming>f6</bpmn:incoming>
+      <bpmn:outgoing>f7</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:manualTask id="Task_Kontrolle" name="Lieferkontrolle durchführen">
+      <bpmn:incoming>f7</bpmn:incoming>
+      <bpmn:outgoing>f8</bpmn:outgoing>
+    </bpmn:manualTask>
+
+    <bpmn:userTask id="Task_Rechnung" name="Rechnung prüfen">
+      <bpmn:documentation>3-Way-Match zwischen Bestellung, Wareneingang und Rechnung.</bpmn:documentation>
+      <bpmn:incoming>f8</bpmn:incoming>
+      <bpmn:outgoing>f9</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gateway_Abweichung" name="Abweichung über 5 %?">
+      <bpmn:incoming>f9</bpmn:incoming>
+      <bpmn:outgoing>f10</bpmn:outgoing>
+      <bpmn:outgoing>f11</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:businessRuleTask id="Task_Freigabe" name="Freigabe durch Einkaufsleiter">
+      <bpmn:documentation>Toleranzregeln je Warengruppe; darüber hinaus persönliche Freigabe.</bpmn:documentation>
+      <bpmn:incoming>f10</bpmn:incoming>
+      <bpmn:outgoing>f12</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+
+    <bpmn:scriptTask id="Task_Skonto" name="Skontofrist berechnen">
+      <bpmn:documentation>Deterministische Berechnung des Zahlungsziels aus Zahlungsbedingungen.</bpmn:documentation>
+      <bpmn:incoming>f12</bpmn:incoming>
+      <bpmn:outgoing>f13</bpmn:outgoing>
+    </bpmn:scriptTask>
+
+    <bpmn:userTask id="Task_Zahlung" name="Zahlung freigeben und auslösen">
+      <bpmn:incoming>f13</bpmn:incoming>
+      <bpmn:outgoing>f14</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:manualTask id="Task_Klaerfall" name="Klärfall mit Lieferant klären">
+      <bpmn:incoming>f11</bpmn:incoming>
+      <bpmn:outgoing>f15</bpmn:outgoing>
+    </bpmn:manualTask>
+
+    <bpmn:endEvent id="End_Klaerfall" name="Fall geklärt oder gutgeschrieben">
+      <bpmn:incoming>f15</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="End_Zahlung" name="Zahlung ausgeführt">
+      <bpmn:incoming>f14</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="f1" sourceRef="Start_Bedarf" targetRef="Task_Bedarf" />
+    <bpmn:sequenceFlow id="f2" sourceRef="Task_Bedarf" targetRef="Task_Budget" />
+    <bpmn:sequenceFlow id="f3" sourceRef="Task_Budget" targetRef="Task_Bestellung" />
+    <bpmn:sequenceFlow id="f4" sourceRef="Task_Bestellung" targetRef="Task_Bestaetigung" />
+    <bpmn:sequenceFlow id="f5" sourceRef="Task_Bestaetigung" targetRef="End_Bestellt" />
+    <bpmn:sequenceFlow id="f6" sourceRef="Task_Bestaetigung" targetRef="Task_Wareneingang" />
+    <bpmn:sequenceFlow id="f7" sourceRef="Task_Wareneingang" targetRef="Task_Kontrolle" />
+    <bpmn:sequenceFlow id="f8" sourceRef="Task_Kontrolle" targetRef="Task_Rechnung" />
+    <bpmn:sequenceFlow id="f9" sourceRef="Task_Rechnung" targetRef="Gateway_Abweichung" />
+    <bpmn:sequenceFlow id="f10" name="innerhalb Toleranz" sourceRef="Gateway_Abweichung" targetRef="Task_Freigabe" />
+    <bpmn:sequenceFlow id="f11" name="über Toleranz" sourceRef="Gateway_Abweichung" targetRef="Task_Klaerfall" />
+    <bpmn:sequenceFlow id="f12" sourceRef="Task_Freigabe" targetRef="Task_Skonto" />
+    <bpmn:sequenceFlow id="f13" sourceRef="Task_Skonto" targetRef="Task_Zahlung" />
+    <bpmn:sequenceFlow id="f14" sourceRef="Task_Zahlung" targetRef="End_Zahlung" />
+    <bpmn:sequenceFlow id="f15" sourceRef="Task_Klaerfall" targetRef="End_Klaerfall" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="Diagram_P2P">
+    <bpmndi:BPMNPlane id="Plane_P2P" bpmnElement="Collaboration_P2P">
+      <bpmndi:BPMNShape id="Shape_Pool_P2P" bpmnElement="Pool_P2P" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1160" height="610" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Einkauf" bpmnElement="Lane_Einkauf" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="1130" height="180" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Wareneingang" bpmnElement="Lane_Wareneingang" isHorizontal="true">
+        <dc:Bounds x="190" y="260" width="1130" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Buchhaltung" bpmnElement="Lane_Buchhaltung" isHorizontal="true">
+        <dc:Bounds x="190" y="420" width="1130" height="270" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Start_Bedarf" bpmnElement="Start_Bedarf">
+        <dc:Bounds x="230" y="152" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Bedarf" bpmnElement="Task_Bedarf">
+        <dc:Bounds x="310" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Budget" bpmnElement="Task_Budget">
+        <dc:Bounds x="460" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Bestellung" bpmnElement="Task_Bestellung">
+        <dc:Bounds x="610" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Bestaetigung" bpmnElement="Task_Bestaetigung">
+        <dc:Bounds x="760" y="130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_Bestellt" bpmnElement="End_Bestellt">
+        <dc:Bounds x="910" y="152" width="36" height="36" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Wareneingang" bpmnElement="Task_Wareneingang">
+        <dc:Bounds x="760" y="300" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Kontrolle" bpmnElement="Task_Kontrolle">
+        <dc:Bounds x="910" y="300" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Rechnung" bpmnElement="Task_Rechnung">
+        <dc:Bounds x="760" y="470" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Gateway_Abweichung" bpmnElement="Gateway_Abweichung" isMarkerVisible="true">
+        <dc:Bounds x="920" y="485" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Freigabe" bpmnElement="Task_Freigabe">
+        <dc:Bounds x="1010" y="470" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Skonto" bpmnElement="Task_Skonto">
+        <dc:Bounds x="1130" y="470" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Zahlung" bpmnElement="Task_Zahlung">
+        <dc:Bounds x="1130" y="580" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_Zahlung" bpmnElement="End_Zahlung">
+        <dc:Bounds x="1260" y="602" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Task_Klaerfall" bpmnElement="Task_Klaerfall">
+        <dc:Bounds x="900" y="580" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_Klaerfall" bpmnElement="End_Klaerfall">
+        <dc:Bounds x="1040" y="602" width="36" height="36" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Edge_f1" bpmnElement="f1">
+        <di:waypoint x="266" y="170" />
+        <di:waypoint x="310" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f2" bpmnElement="f2">
+        <di:waypoint x="410" y="170" />
+        <di:waypoint x="460" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f3" bpmnElement="f3">
+        <di:waypoint x="560" y="170" />
+        <di:waypoint x="610" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f4" bpmnElement="f4">
+        <di:waypoint x="710" y="170" />
+        <di:waypoint x="760" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f5" bpmnElement="f5">
+        <di:waypoint x="860" y="170" />
+        <di:waypoint x="910" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f6" bpmnElement="f6">
+        <di:waypoint x="810" y="210" />
+        <di:waypoint x="810" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f7" bpmnElement="f7">
+        <di:waypoint x="860" y="340" />
+        <di:waypoint x="910" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f8" bpmnElement="f8">
+        <di:waypoint x="960" y="380" />
+        <di:waypoint x="960" y="430" />
+        <di:waypoint x="810" y="430" />
+        <di:waypoint x="810" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f9" bpmnElement="f9">
+        <di:waypoint x="860" y="510" />
+        <di:waypoint x="920" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f10" bpmnElement="f10">
+        <di:waypoint x="970" y="510" />
+        <di:waypoint x="1010" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f11" bpmnElement="f11">
+        <di:waypoint x="945" y="535" />
+        <di:waypoint x="950" y="580" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f12" bpmnElement="f12">
+        <di:waypoint x="1110" y="510" />
+        <di:waypoint x="1130" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f13" bpmnElement="f13">
+        <di:waypoint x="1180" y="550" />
+        <di:waypoint x="1180" y="580" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f14" bpmnElement="f14">
+        <di:waypoint x="1230" y="620" />
+        <di:waypoint x="1260" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_f15" bpmnElement="f15">
+        <di:waypoint x="1000" y="620" />
+        <di:waypoint x="1040" y="620" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
