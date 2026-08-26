@@ -51,49 +51,6 @@
   min-height: 0;
 }
 
-/* 6. Multi-step loading states */
-.analyzing-steps {
-  display: flex;
-  flex-direction: column;
-  gap: .6rem;
-  margin-top: var(--space-4);
-  text-align: left;
-}
-
-.analyzing-step {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  transition: color .3s;
-}
-
-.analyzing-step.done {
-  color: var(--color-quick-win);
-}
-
-.analyzing-step.active {
-  color: var(--text-primary);
-}
-
-.analyzing-step-dot {
-  width: .5rem;
-  height: .5rem;
-  border-radius: 50%;
-  background: var(--border-subtle);
-  flex-shrink: 0;
-  transition: background .3s;
-}
-
-.analyzing-step.done .analyzing-step-dot { background: var(--color-quick-win); }
-.analyzing-step.active .analyzing-step-dot { background: var(--accent-primary); animation: pulse-dot 1.2s infinite; }
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .5; transform: scale(1.3); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

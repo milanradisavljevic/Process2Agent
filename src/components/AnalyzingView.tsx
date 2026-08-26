@@ -1,45 +1,23 @@
-import { useEffect, useState } from 'react';
-import { Check } from 'lucide-react';
-
 interface AnalyzingViewProps {
-  elementCount: number;
+  elementCount?: number;
+  variant?: 'loading' | 'analyzing';
 }
 
-export function AnalyzingView({ elementCount }: AnalyzingViewProps) {
-  const [step, setStep] = useState(0);
+const LOADING_TEXT = 'Workspace wird geladen…';
+const ANALYZING_TEXT = 'KI-Analyse läuft…';
 
-  useEffect(() => {
-    if (elementCount === 0) return;
-    const timers = [
-      setTimeout(() => setStep(1), 800),
-      setTimeout(() => setStep(2), 2200),
-      setTimeout(() => setStep(3), 4000),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [elementCount]);
-
-  const steps = [
-    { label: 'BPMN-Struktur parsen', done: step >= 0, active: step === 0 },
-    { label: 'Schritte extrahieren', done: step >= 1, active: step === 1 },
-    { label: 'KI-Analyse ausführen', done: step >= 2, active: step === 2 },
-    { label: 'Empfehlungen aufbereiten', done: step >= 3, active: step === 3 },
-  ];
+export function AnalyzingView({ elementCount = 0, variant = 'loading' }: AnalyzingViewProps) {
+  const title = variant === 'analyzing' ? ANALYZING_TEXT : LOADING_TEXT;
+  const detail = variant === 'analyzing' && elementCount > 0
+    ? `${elementCount} Schritte werden durch das konfigurierte LLM bewertet. Dies dauert je nach Provider und Modell einige Sekunden.`
+    : 'Einen Moment bitte.';
 
   return (
     <div className="analyzing-view view-transition">
       <div className="analyzing-card">
-        <div className="analyzing-spinner" />
-        <h2>Prozess wird analysiert…</h2>
-        <p>{elementCount} Schritte werden von der KI bewertet. Das dauert ca. 10–15 Sekunden.</p>
-        <div className="analyzing-steps">
-          {steps.map((s, i) => (
-            <div key={i} className={`analyzing-step ${s.done ? 'done' : ''} ${s.active ? 'active' : ''}`}>
-              <span className="analyzing-step-dot" />
-              {s.done && !s.active ? <Check size={14} /> : null}
-              <span>{s.label}</span>
-            </div>
-          ))}
-        </div>
+        <div className="analyzing-spinner" aria-hidden="true" />
+        <h2>{title}</h2>
+        <p>{detail}</p>
       </div>
     </div>
   );

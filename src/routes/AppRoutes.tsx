@@ -25,7 +25,7 @@ export function AppRoutes() {
   }, []);
 
   if (loading || !workspace) {
-    return <AnalyzingView elementCount={0} />;
+    return <AnalyzingView variant="loading" />;
   }
 
   return (

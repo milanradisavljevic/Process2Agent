@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 import { BpmnViewer } from '../components/BpmnViewer';
 import { InterviewPanel } from '../components/InterviewPanel';
 import { LLMConfigPanel } from '../components/LLMConfigPanel';
+import { AnalyzingView } from '../components/AnalyzingView';
 import { QuickWinsView } from '../components/QuickWinsView';
 import { ResizableDrawer } from '../components/ResizableDrawer';
 import { ScoreBar } from '../components/ScoreBar';
@@ -33,6 +34,10 @@ export function AssessmentPage() {
 
   if (!processId || !process) {
     return <Navigate to="/" replace />;
+  }
+
+  if (llmStatus === 'running') {
+    return <AnalyzingView variant="analyzing" elementCount={process.steps.length} />;
   }
 
   const area = workspace?.areas.find((a) => a.id === process.areaId);
