@@ -239,8 +239,6 @@
 .process-card.status-analyzed { border-left-color: var(--color-potential); }
 .process-card.status-reviewed { border-left-color: var(--accent-primary); }
 .process-card.status-validated { border-left-color: var(--color-quick-win); }
-.process-card.status-implementing { border-left-color: var(--color-human); }
-.process-card.status-live { border-left-color: var(--color-quick-win); }
 
 .process-card-main {
   display: flex;
@@ -424,8 +422,6 @@
 .status-badge--analyzed { color: var(--color-potential); background: var(--tint-potential); }
 .status-badge--reviewed { color: var(--accent-primary); background: var(--accent-primary-dim); }
 .status-badge--validated { color: var(--color-quick-win); background: var(--tint-quick-win); }
-.status-badge--implementing { color: var(--color-human); background: var(--tint-human); }
-.status-badge--live { color: var(--color-quick-win); background: var(--tint-quick-win); }
 
 .empty-area {
   margin: 0;

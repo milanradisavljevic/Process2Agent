@@ -348,8 +348,6 @@ const STATUS_LABELS_DE: Record<ProcessEntry['status'], string> = {
   analyzed: 'Analysiert',
   reviewed: 'Bewertet',
   validated: 'Validiert',
-  implementing: 'In Umsetzung',
-  live: 'Live',
 };
 
 function formatCurrency(value: number): string {

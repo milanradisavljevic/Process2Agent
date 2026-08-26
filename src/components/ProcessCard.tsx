@@ -14,8 +14,6 @@ const STATUS_LABELS: Record<ProcessStatus, string> = {
   analyzed: 'Analysiert',
   reviewed: 'Bewertet',
   validated: 'Validiert',
-  implementing: 'In Umsetzung',
-  live: 'Live',
 };
 
 export function ProcessCard({ process, onOpen, onDelete, onStatusChange }: ProcessCardProps) {
@@ -56,7 +54,7 @@ export function ProcessCard({ process, onOpen, onDelete, onStatusChange }: Proce
           <MoreVertical size={16} />
         </button>
         <div className={`process-menu-popover ${menuOpen ? 'open' : ''}`}>
-          {(['imported', 'analyzed', 'reviewed', 'validated', 'implementing', 'live'] as ProcessStatus[]).map((status) => (
+          {(['imported', 'analyzed', 'reviewed', 'validated'] as ProcessStatus[]).map((status) => (
             <button key={status} type="button" onClick={() => { onStatusChange(process.id, status); setMenuOpen(false); }}>
               Status: {STATUS_LABELS[status]}
             </button>

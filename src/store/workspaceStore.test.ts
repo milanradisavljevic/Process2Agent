@@ -99,9 +99,12 @@ describe('workspaceStore', () => {
   });
 
   it('getAllProcesses normalisiert Legacy-Statuswerte', async () => {
+    // Simuliert Bestände aus Exporten vor der Status-Reduktion
+    const legacy = (id: string, status: string): ProcessEntry =>
+      ({ ...process({ id }), status }) as unknown as ProcessEntry;
     vi.mocked(getAllProcesses).mockResolvedValueOnce([
-      process({ id: 'old1', status: 'live' }),
-      process({ id: 'old2', status: 'implementing' }),
+      legacy('old1', 'live'),
+      legacy('old2', 'implementing'),
     ]);
 
     await useWorkspaceStore.getState().load();

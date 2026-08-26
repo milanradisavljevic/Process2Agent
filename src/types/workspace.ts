@@ -35,9 +35,7 @@ export type ProcessStatus =
   | 'imported'
   | 'analyzed'
   | 'reviewed'
-  | 'validated'
-  | 'implementing'
-  | 'live';
+  | 'validated';
 
 export interface ProcessEntry {
   id: string;
